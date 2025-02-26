@@ -93,6 +93,9 @@ export async function POST(req: Request) {
         password: hashedPassword,
         role: role,
         ...(isEmail
+          ? { emailVerified: new Date() }
+          : { phoneVerified: new Date() }),
+        ...(isEmail
           ? { email: sanitizedIdentifier }
           : { phone: sanitizedIdentifier }),
       },

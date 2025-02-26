@@ -9,8 +9,8 @@ export const getApiDocs = async () => {
     definition: {
       openapi: "3.0.0",
       info: {
-        title: "VansNTrucks API",
-        description: "VansNTrucks API",
+        title: "VanzNTruckz API",
+        description: "VanzNTruckz API Documentation",
         version: "1.0",
       },
       components: {
