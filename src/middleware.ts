@@ -1,6 +1,6 @@
 import NextAuth from "next-auth";
 import authConfig from "./auth.config";
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 import { auth } from "./auth";
 const { auth: middleware } = NextAuth(authConfig);
 
@@ -8,6 +8,7 @@ export default middleware(async (req) => {
   const session = await auth();
   const nextUrl = req.nextUrl;
 
+  console.log("Next URL:", nextUrl);
   console.log("Session:", session);
 
   // if (
