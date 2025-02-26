@@ -6,10 +6,10 @@ const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || "refreshsecret";
 const EMAIL_SECRET = process.env.EMAIL_TOKEN_SECRET || "emailsecret";
 
 export const generateTokens = (userId: string) => {
-  const accessToken = jwt.sign(userId, ACCESS_SECRET, {
+  const accessToken = jwt.sign({ userId }, ACCESS_SECRET, {
     expiresIn: "15m",
   });
-  const refreshToken = jwt.sign(userId, REFRESH_SECRET, {
+  const refreshToken = jwt.sign({ userId }, REFRESH_SECRET, {
     expiresIn: "7d",
   });
 
