@@ -30,8 +30,15 @@ const registerDocs = {
                 },
                 otp: {
                   type: "string",
-                  description: "4-digit OTP received by the user",
+                  description: "4-digit OTP received via email or SMS",
                   example: "1234",
+                },
+                role: {
+                  type: "string",
+                  enum: ["CUSTOMER", "DRIVER"],
+                  description: "User role in the system",
+                  example: "CUSTOMER",
+                  default: "CUSTOMER",
                 },
               },
             },
