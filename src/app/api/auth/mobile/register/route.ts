@@ -9,6 +9,7 @@ const registerSchema = z.object({
   password: z.string().min(6),
   name: z.string().min(2),
   otp: z.string().length(4), // Ensure OTP is exactly 4 digits
+  role: z.enum(["CUSTOMER", "DRIVER"]).default("CUSTOMER"),
 });
 
 export async function POST(req: Request) {
@@ -24,7 +25,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { identifier, password, name, otp } = body;
+    const { identifier, password, name, otp, role } = validation.data;
     const sanitizedIdentifier = identifier.trim().toLowerCase();
 
     let isEmail = false;
@@ -90,6 +91,7 @@ export async function POST(req: Request) {
       data: {
         name,
         password: hashedPassword,
+        role: role,
         ...(isEmail
           ? { email: sanitizedIdentifier }
           : { phone: sanitizedIdentifier }),
