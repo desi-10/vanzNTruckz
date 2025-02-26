@@ -1,9 +1,9 @@
-const registerDocs = {
-  "/api/auth/mobile/register": {
+const otpDocs = {
+  "/api/auth/mobile/verification": {
     post: {
-      summary: "User Registration",
+      summary: "Generate OTP",
       description:
-        "Registers a new user using either an email or phone number and securely stores their password.",
+        "Generates and sends an OTP to a given email or phone number for authentication.",
       tags: ["Authentication"],
       requestBody: {
         required: true,
@@ -18,26 +18,15 @@ const registerDocs = {
                     "User's email or phone number. Must be a valid email or a phone number with 10-15 digits.",
                   example: "user@example.com",
                 },
-                password: {
-                  type: "string",
-                  description:
-                    "User's password. Must be at least 6 characters long.",
-                  example: "password123",
-                },
-                name: {
-                  type: "string",
-                  description: "User's full name. Minimum 2 characters.",
-                  example: "John Doe",
-                },
               },
-              required: ["identifier", "password", "name"],
+              required: ["identifier"],
             },
           },
         },
       },
       responses: {
-        201: {
-          description: "User registered successfully",
+        200: {
+          description: "OTP sent successfully",
           content: {
             "application/json": {
               schema: {
@@ -45,20 +34,7 @@ const registerDocs = {
                 properties: {
                   message: {
                     type: "string",
-                    example: "User registered successfully",
-                  },
-                  user: {
-                    type: "object",
-                    properties: {
-                      id: {
-                        type: "string",
-                        example: "cl8jkwz8e0001z2k3h9q",
-                      },
-                      name: {
-                        type: "string",
-                        example: "John Doe",
-                      },
-                    },
+                    example: "OTP sent successfully",
                   },
                 },
               },
@@ -81,22 +57,6 @@ const registerDocs = {
             },
           },
         },
-        409: {
-          description: "User already exists",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "User already exists",
-                  },
-                },
-              },
-            },
-          },
-        },
         500: {
           description: "Internal server error",
           content: {
@@ -106,7 +66,7 @@ const registerDocs = {
                 properties: {
                   error: {
                     type: "string",
-                    example: "Something went wrong",
+                    example: "Internal server error",
                   },
                 },
               },
@@ -118,4 +78,4 @@ const registerDocs = {
   },
 };
 
-export default registerDocs;
+export default otpDocs;

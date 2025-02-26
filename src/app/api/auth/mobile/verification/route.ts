@@ -59,7 +59,7 @@ export const POST = async (request: Request) => {
     }
 
     return NextResponse.json(
-      { message: "OTP sent successfully" }, // ❌ Removed OTP from response
+      { message: "OTP sent successfully", otp }, // ❌ Removed OTP from response
       { status: 200 }
     );
   } catch (error) {

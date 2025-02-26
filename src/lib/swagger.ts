@@ -1,5 +1,6 @@
 import loginDocs from "@/docs/auth/login";
 import registerDocs from "@/docs/auth/register";
+import otpDocs from "@/docs/auth/verification";
 import { createSwaggerSpec } from "next-swagger-doc";
 
 export const getApiDocs = async () => {
@@ -25,6 +26,7 @@ export const getApiDocs = async () => {
       paths: {
         ...loginDocs,
         ...registerDocs,
+        ...otpDocs,
       },
     },
   });
