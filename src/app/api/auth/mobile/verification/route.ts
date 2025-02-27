@@ -24,7 +24,7 @@ export const POST = async (request: Request) => {
     const sanitizedIdentifier = identifier.trim().toLowerCase();
 
     const otp = generateOtp();
-    const expiresAt = dayjs().add(2, "minutes").toDate();
+    const expiresAt = dayjs().add(10, "minutes").toDate();
 
     await prisma.$transaction(async (tx) => {
       if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
