@@ -7,13 +7,15 @@ export default {
       async authorize(credentials) {
         try {
           const { email, password } = credentials;
-          const res = await fetch("http://localhost:3000/api/v1/users/login", {
+          const res = await fetch("http://localhost:3000/api/auth/login", {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ email, password }),
           });
+
+          console.log("Response:", res);
 
           if (!res.ok) {
             throw new Error("Failed to log in");

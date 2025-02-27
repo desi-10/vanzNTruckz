@@ -31,10 +31,10 @@ export const {
 
       if (!user.id) return false;
 
-      const existingUser = await getUserById(user.id);
-      if (!existingUser?.emailVerified) {
-        throw new Error("Email not verified");
-      }
+      // const existingUser = await getUserById(user.id);
+      // if (!existingUser?.emailVerified) {
+      //   throw new Error("Email not verified");
+      // }
 
       return true;
     },

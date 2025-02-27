@@ -1,12 +1,11 @@
 import { getUserByEmail } from "@/data/user";
-import { prisma } from "@/lib/db";
-import { sendOtpViaEmail } from "@/lib/email";
 import { LoginSchema } from "@/types/user";
-import { generateOtp } from "@/utils/generate-otp";
 import { generateTokens } from "@/utils/jwt";
 import bcrypt from "bcryptjs";
-import dayjs from "dayjs";
 import { NextRequest, NextResponse } from "next/server";
+
+// Allowed Roles
+const ALLOWED_ROLES = ["SUPER_ADMIN", "ADMIN", "SUB_ADMIN"];
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -32,29 +31,9 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    // Check if the user is verified
-    if (!user.emailVerified) {
-      // Delete any existing OTP for this email
-      await prisma.emailOTP.deleteMany({
-        where: { email },
-      });
-
-      const otp = generateOtp();
-      const expiresAt = dayjs().add(2, "minutes").toDate(); // Expire in 2 minutes
-
-      await prisma.emailOTP.create({
-        data: {
-          email,
-          otp,
-          expires: expiresAt,
-        },
-      });
-      // Send verification email
-      await sendOtpViaEmail(user.email, otp);
-      return NextResponse.json(
-        { error: "OTP has been sent to your email" },
-        { status: 400 }
-      );
+    // Check User Role Authorization
+    if (!ALLOWED_ROLES.includes(user.role)) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Compare password
@@ -66,11 +45,19 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
-    // Generate JWT token
+    // Generate JWT Token
     const token = generateTokens(user.id);
 
     return NextResponse.json(
-      { data: { id: user.id, name: user.name, email: user.email, ...token } },
+      {
+        data: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          ...token,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {

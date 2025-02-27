@@ -37,7 +37,7 @@ export const POST = async (request: NextRequest) => {
 
     // Generate new OTP
     const otp = generateOtp();
-    const expiresAt = dayjs().add(2, "minutes").toDate(); // Expire in 2 minutes
+    const expiresAt = dayjs().add(10, "minutes").toDate(); // Expire in 10 minutes
 
     // Store OTP in database
     await prisma.passwordResetToken.create({
