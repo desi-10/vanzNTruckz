@@ -1,5 +1,5 @@
 const refreshTokenDocs = {
-  "/api/auth/refresh-token": {
+  "/api/auth/mobile/refresh-token": {
     post: {
       summary: "Refresh Access Token",
       description:
