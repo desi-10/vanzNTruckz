@@ -28,24 +28,20 @@ export const POST = async (request: Request) => {
 
     // ✅ Check if identifier is an email
     if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
-      await prisma.emailOTP.deleteMany({
+      await prisma.emailOTP.upsert({
         where: { email: sanitizedIdentifier },
-      });
-
-      await prisma.emailOTP.create({
-        data: { email: sanitizedIdentifier, otp, expires: expiresAt },
+        update: { otp, expires: expiresAt },
+        create: { email: sanitizedIdentifier, otp, expires: expiresAt },
       });
 
       console.log(`OTP for ${sanitizedIdentifier}: ${otp}`); // ✅ For debugging only
     }
     // ✅ Check if identifier is a phone number
     else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
-      await prisma.phoneOTP.deleteMany({
+      await prisma.phoneOTP.upsert({
         where: { phone: sanitizedIdentifier },
-      });
-
-      await prisma.phoneOTP.create({
-        data: { phone: sanitizedIdentifier, otp, expires: expiresAt },
+        update: { otp, expires: expiresAt },
+        create: { phone: sanitizedIdentifier, otp, expires: expiresAt },
       });
 
       console.log(`OTP for ${sanitizedIdentifier}: ${otp}`); // ✅ For debugging only
