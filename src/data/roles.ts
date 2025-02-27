@@ -1,0 +1,1 @@
+export const ALLOWED_ROLES = ["SUPER_ADMIN", "ADMIN", "SUB_ADMIN"];

@@ -19,7 +19,7 @@ import { toast } from "sonner";
 import Loader from "@/components/loader";
 import axios from "axios";
 
-// Define the validation schema using Zod
+// Validation Schema
 const resetPasswordSchema = z
   .object({
     newPassword: z
@@ -28,22 +28,15 @@ const resetPasswordSchema = z
     confirmPassword: z
       .string()
       .min(6, "Password must be at least 6 characters long"),
-    otp: z
-      .string()
-      .min(4, "OTP must be 4 digits")
-      .max(4, "OTP must be 4 digits"),
+    otp: z.string().length(4, "OTP must be 4 digits long"),
   })
-  .refine((data) => {
-    if (data.newPassword !== data.confirmPassword) {
-      return {
-        message: "Passwords do not match",
-        path: ["confirmPassword"],
-      };
-    }
+  .refine((data) => data.newPassword === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
   });
 
-// Define the form values type
-type resetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
+// Form Values Type
+type ResetPasswordFormValues = z.infer<typeof resetPasswordSchema>;
 
 export function ResetPasswordForm({
   className,
@@ -53,24 +46,23 @@ export function ResetPasswordForm({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<resetPasswordFormValues>({
+  } = useForm<ResetPasswordFormValues>({
     resolver: zodResolver(resetPasswordSchema),
   });
 
   const router = useRouter();
 
-  // Handle form submission
-  const onSubmit = async (data: resetPasswordFormValues) => {
+  const onSubmit = async (data: ResetPasswordFormValues) => {
     try {
       await axios.post("/api/auth/reset-password", {
         password: data.newPassword,
         otp: data.otp,
       });
+      toast.success("✅ Password reset successfully");
       router.push("/");
-      toast("✅ Password reset successfully");
     } catch (error) {
       console.error("An unexpected error occurred:", error);
-      toast("❌ Password reset failed");
+      toast.error("❌ Password reset failed");
     }
   };
 
@@ -86,67 +78,60 @@ export function ResetPasswordForm({
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="grid gap-6">
-              <div className="grid gap-6">
-                <div className="grid gap-2">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">New Password</Label>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("newPassword")}
-                  />
-                  {errors.newPassword && (
-                    <p className="text-red-500 text-sm">
-                      {errors.newPassword.message}
-                    </p>
-                  )}
-                </div>
-                <div className="grid gap-2">
-                  <div className="flex items-center">
-                    <Label htmlFor="password">Confrim Password</Label>
-                  </div>
-                  <Input
-                    id="password"
-                    type="password"
-                    {...register("confirmPassword")}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-red-500 text-sm">
-                      {errors.confirmPassword.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="grid gap-2">
-                  <div className="flex items-center">
-                    <Label htmlFor="otp">OTP</Label>
-                  </div>
-                  <Input id="otp" type="password" {...register("otp")} />
-                  {errors.otp && (
-                    <p className="text-red-500 text-sm">{errors.otp.message}</p>
-                  )}
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full bg-[#f77f1e] text-white hover:bg-[#f77f1e]/80 hover:text-white"
-                >
-                  {isSubmitting ? <Loader /> : "Reset Password"}
-                </Button>
+              <div className="grid gap-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  {...register("newPassword")}
+                />
+                {errors.newPassword && (
+                  <p className="text-red-500 text-sm">
+                    {errors.newPassword.message}
+                  </p>
+                )}
               </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  {...register("confirmPassword")}
+                />
+                {errors.confirmPassword && (
+                  <p className="text-red-500 text-sm">
+                    {errors.confirmPassword.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="otp">OTP</Label>
+                <Input id="otp" type="text" {...register("otp")} />
+                {errors.otp && (
+                  <p className="text-red-500 text-sm">{errors.otp.message}</p>
+                )}
+              </div>
+
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="w-full bg-[#f77f1e] text-white hover:bg-[#f77f1e]/80 hover:text-white"
+              >
+                {isSubmitting ? <Loader /> : "Reset Password"}
+              </Button>
             </div>
           </form>
         </CardContent>
       </Card>
-      <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4">
+      <div className="text-center text-xs text-muted-foreground">
         By clicking continue, you agree to our{" "}
-        <Link href="#" className="text-orange-500">
+        <Link href="#" className="text-orange-500 underline">
           Terms of Service
         </Link>{" "}
         and{" "}
-        <Link href="#" className="text-orange-500">
+        <Link href="#" className="text-orange-500 underline">
           Privacy Policy
         </Link>
         .

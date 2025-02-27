@@ -13,7 +13,7 @@ export const {
   unstable_update,
 } = NextAuth({
   pages: {
-    signIn: "/dashboard",
+    signIn: "/dashboard/orders",
     error: "/auth/error",
     signOut: "/",
   },

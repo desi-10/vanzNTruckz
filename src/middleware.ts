@@ -16,6 +16,13 @@ export default middleware(async (req) => {
   console.log("Session:", session);
 
   if (
+    session?.user &&
+    ["/login", "/forgot-password", "/reset-password"].includes(nextUrl.pathname)
+  ) {
+    return NextResponse.redirect(new URL("/dashboard", req.url));
+  }
+
+  if (
     nextUrl.pathname.startsWith("/dashboard") &&
     !ALLOWED_ROLES.includes(session?.user?.role as string)
   ) {
@@ -24,9 +31,9 @@ export default middleware(async (req) => {
 
   if (
     ALLOWED_ROLES.includes(session?.user?.role as string) &&
-    nextUrl.pathname !== "/dashboard"
+    nextUrl.pathname === "/"
   ) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+    return NextResponse.redirect(new URL("/dashboard/orders", req.url));
   }
 });
 

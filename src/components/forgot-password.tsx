@@ -16,7 +16,7 @@ import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Loader from "./loader";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 
 // Define the validation schema using Zod
@@ -49,8 +49,12 @@ export function ForgotPasswordForm({
       router.push("/reset-password");
       toast("✅ Password reset link sent to your email");
     } catch (error) {
+      if (error instanceof AxiosError) {
+        toast(`❌ ${error.response?.data.error}`);
+        return;
+      }
       console.error("An unexpected error occurred:", error);
-      toast("❌ Email or password is incorrect");
+      toast("❌ Something went wrong, please try again later");
     }
   };
 

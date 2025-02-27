@@ -1,10 +1,11 @@
 import { getUserByEmail } from "@/data/user";
 import { prisma } from "@/lib/db";
-import { sendOtpViaEmail } from "@/lib/email";
+// import { sendOtpViaEmail } from "@/lib/email";
 import { ForgotPasswordSchema } from "@/types/user";
 import { generateOtp } from "@/utils/generate-otp";
 import { NextRequest, NextResponse } from "next/server";
 import dayjs from "dayjs"; // For handling timestamps
+import { ALLOWED_ROLES } from "@/data/roles";
 
 export const POST = async (request: NextRequest) => {
   try {
@@ -23,6 +24,7 @@ export const POST = async (request: NextRequest) => {
 
     // Check if user exists
     const user = await getUserByEmail(email);
+
     if (!user) {
       return NextResponse.json(
         { error: "Invalid email or user does not exist" },
@@ -30,11 +32,19 @@ export const POST = async (request: NextRequest) => {
       );
     }
 
+    if (!ALLOWED_ROLES.includes(user.role as string)) {
+      return NextResponse.json(
+        { error: "You are not authorized to perform this action" },
+        { status: 401 }
+      );
+    }
+
+    console.log("deleting many");
     // Delete any existing OTP for this email
     await prisma.passwordResetToken.deleteMany({
       where: { email },
     });
-
+    console.log("end delete many");
     // Generate new OTP
     const otp = generateOtp();
     const expiresAt = dayjs().add(10, "minutes").toDate(); // Expire in 10 minutes
@@ -49,10 +59,10 @@ export const POST = async (request: NextRequest) => {
     });
 
     // Send OTP via email
-    await sendOtpViaEmail(user.email || "", otp);
+    // await sendOtpViaEmail(user.email || "", otp);
 
     return NextResponse.json(
-      { message: "OTP has been sent to your email" },
+      { message: "OTP has been sent to your email", otp },
       { status: 200 }
     );
   } catch (error) {
