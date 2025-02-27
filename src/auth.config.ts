@@ -22,6 +22,7 @@ export default {
           }
 
           const user = await res.json();
+          console.log("User:", user);
 
           return user.data;
         } catch (error) {
