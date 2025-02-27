@@ -22,6 +22,7 @@ export const POST = async (request: Request) => {
 
     const { identifier } = validation.data;
     const sanitizedIdentifier = identifier.trim().toLowerCase();
+
     const otp = generateOtp();
     const expiresAt = dayjs().add(2, "minutes").toDate();
 
@@ -42,7 +43,7 @@ export const POST = async (request: Request) => {
     });
 
     return NextResponse.json(
-      { message: "OTP sent successfully" }, // ✅ No OTP in response
+      { message: "OTP sent successfully", otp }, // ✅ No OTP in response
       { status: 200 }
     );
   } catch (error) {
