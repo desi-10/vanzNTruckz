@@ -10,7 +10,7 @@ const verificationSchema = z.object({
 
 export const POST = async (request: Request) => {
   try {
-    const body = await request.json(); // ✅ Properly parse request body
+    const body = await request.json();
     const validation = verificationSchema.safeParse(body);
 
     if (!validation.success) {
@@ -21,45 +21,28 @@ export const POST = async (request: Request) => {
     }
 
     const { identifier } = validation.data;
-    const sanitizedIdentifier = identifier.trim().toLowerCase(); // ✅ Normalize input
-
+    const sanitizedIdentifier = identifier.trim().toLowerCase();
     const otp = generateOtp();
-    const expiresAt = dayjs().add(2, "minutes").toDate(); // Expire in 2 minutes
+    const expiresAt = dayjs().add(2, "minutes").toDate();
 
-    // ✅ Check if identifier is an email
-    if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
-      await prisma.emailOTP.deleteMany({
-        where: { email: sanitizedIdentifier },
-      });
-
-      await prisma.emailOTP.create({
-        data: { email: sanitizedIdentifier, otp, expires: expiresAt },
-      });
-
-      console.log(`OTP for ${sanitizedIdentifier}: ${otp}`); // ✅ For debugging only
-    }
-    // ✅ Check if identifier is a phone number
-    else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
-      await prisma.phoneOTP.deleteMany({
-        where: { phone: sanitizedIdentifier },
-      });
-
-      await prisma.phoneOTP.create({
-        data: { phone: sanitizedIdentifier, otp, expires: expiresAt },
-      });
-
-      console.log(`OTP for ${sanitizedIdentifier}: ${otp}`); // ✅ For debugging only
-    }
-    // ❌ Invalid input
-    else {
-      return NextResponse.json(
-        { error: "Please enter a valid email or phone number" },
-        { status: 400 }
-      );
-    }
+    await prisma.$transaction(async (tx) => {
+      if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
+        await tx.emailOTP.deleteMany({ where: { email: sanitizedIdentifier } });
+        await tx.emailOTP.create({
+          data: { email: sanitizedIdentifier, otp, expires: expiresAt },
+        });
+      } else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
+        await tx.phoneOTP.deleteMany({ where: { phone: sanitizedIdentifier } });
+        await tx.phoneOTP.create({
+          data: { phone: sanitizedIdentifier, otp, expires: expiresAt },
+        });
+      } else {
+        throw new Error("Invalid email or phone number");
+      }
+    });
 
     return NextResponse.json(
-      { message: "OTP sent successfully", otp }, // ❌ Removed OTP from response
+      { message: "OTP sent successfully" }, // ✅ No OTP in response
       { status: 200 }
     );
   } catch (error) {
