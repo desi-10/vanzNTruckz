@@ -9,7 +9,7 @@ import {
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbSeparator,
-  // BreadcrumbPage,
+  BreadcrumbPage,
 } from "@/components/ui/breadcrumb"; // Adjust the import path if necessary
 import Link from "next/link";
 
@@ -35,11 +35,7 @@ const DynamicBreadcrumb = () => {
               {index !== 0 && <BreadcrumbSeparator />}
               <BreadcrumbItem className="capitalize">
                 {isLast ? (
-                  <div>
-                    {/* <BreadcrumbPage> */}
-                    {decodeURIComponent(segment)}
-                    {/* </BreadcrumbPage> */}
-                  </div>
+                  <BreadcrumbPage>{decodeURIComponent(segment)}</BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink>
                     <Link href={href}>{decodeURIComponent(segment)}</Link>

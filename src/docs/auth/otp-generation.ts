@@ -1,5 +1,5 @@
 const otpDocs = {
-  "/api/auth/mobile/verification": {
+  "/api/auth/mobile/otp-generation": {
     post: {
       summary: "Generate OTP",
       description:

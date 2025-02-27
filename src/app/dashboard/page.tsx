@@ -1,4 +1,13 @@
+"use client";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+
 export default function DashboardPage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.push("/dashboard/orders");
+  }, [router]);
+
   return (
     <div>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">

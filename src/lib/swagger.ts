@@ -1,7 +1,7 @@
 import loginDocs from "@/docs/auth/login";
 import registerDocs from "@/docs/auth/register";
 import forgotPasswordDocs from "@/docs/auth/reset-password";
-import otpDocs from "@/docs/auth/verification";
+import otpDocs from "@/docs/auth/otp-generation";
 import { createSwaggerSpec } from "next-swagger-doc";
 
 export const getApiDocs = async () => {
