@@ -29,11 +29,10 @@ export const POST = async (request: Request) => {
 
     // Verify the refresh token
     const decodedToken = verifyRefreshToken(refreshToken);
-    console.log("Decoded Token:", decodedToken);
 
     if (!decodedToken) {
       return NextResponse.json(
-        { success: false, message: "Invalid or expired refresh token" },
+        { error: "Invalid or expired refresh token" },
         { status: 401 }
       );
     }
@@ -42,15 +41,17 @@ export const POST = async (request: Request) => {
       (decodedToken as JwtPayload).userId
     ).accessToken;
 
-    console.log("New Access Token:", newAccessToken);
-
-    return NextResponse.json({
-      accessToken: newAccessToken,
-    });
+    return NextResponse.json(
+      {
+        message: "New access token generated successfully",
+        accessToken: newAccessToken,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Refresh Token Error:", error);
     return NextResponse.json(
-      { success: false, message: "Internal server error" },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

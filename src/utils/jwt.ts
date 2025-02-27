@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 
 const ACCESS_SECRET = process.env.ACCESS_TOKEN_SECRET || "accesssecret";
 const REFRESH_SECRET = process.env.REFRESH_TOKEN_SECRET || "refreshsecret";
@@ -21,11 +21,21 @@ export const generateEmailVerificationToken = (email: string): string => {
 };
 
 export const verifyAccessToken = (token: string) => {
-  return jwt.verify(token, ACCESS_SECRET);
+  try {
+    return jwt.verify(token, ACCESS_SECRET);
+  } catch (error) {
+    console.error("Access Token Error:", error);
+    return null;
+  }
 };
 
 export const verifyRefreshToken = (token: string) => {
-  return jwt.verify(token, REFRESH_SECRET);
+  try {
+    return jwt.verify(token, REFRESH_SECRET);
+  } catch (error) {
+    console.error("Refresh Token Error:", error);
+    return null;
+  }
 };
 
 export const verifyEmailToken = (token: string) => {
@@ -40,8 +50,13 @@ export const validateJWT = async (req: Request) => {
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = verifyAccessToken(token);
-    return await prisma.user.findUnique({ where: { id: decoded as string } });
+    const decodedToken = verifyAccessToken(token);
+
+    if (!decodedToken) return null;
+
+    return await prisma.user.findUnique({
+      where: { id: (decodedToken as JwtPayload).userId },
+    });
   } catch (error) {
     console.error("JWT validation failed:", error);
     return null; // Invalid token
