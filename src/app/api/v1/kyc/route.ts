@@ -114,42 +114,64 @@ export const PATCH = async (request: Request) => {
       );
     }
 
-    await prisma.$transaction(async (tx) => {
-      if (profilePictureResult) {
-        await tx.user.update({
-          where: { id: user.id },
-          data: { image: profilePictureResult.url },
-        });
-      }
+    const [existingLicense, existingNumberPlate] = await Promise.all([
+      prisma.driver.findUnique({ where: { license } }),
+      prisma.driver.findUnique({ where: { numberPlate } }),
+    ]);
 
-      // Use UPSERT here
-      await tx.driver.upsert({
-        where: { userId: user.id },
-        create: {
-          userId: user.id,
-          profilePicture: profilePictureResult || undefined,
-          carPicture: carPictureResult || undefined,
-          numberPlate,
-          license,
-          licenseExpiry: new Date(licenseExpiry),
-          roadworthySticker,
-          roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker,
-          ghanaCard,
-        },
-        update: {
-          profilePicture: profilePictureResult || undefined,
-          carPicture: carPictureResult || undefined,
-          numberPlate,
-          license,
-          licenseExpiry: new Date(licenseExpiry),
-          roadworthySticker,
-          roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker,
-          ghanaCard,
-        },
-      });
-    });
+    if (existingLicense && existingLicense.userId !== user.id) {
+      return NextResponse.json(
+        { error: "License already in use" },
+        { status: 409 }
+      );
+    }
+
+    if (existingNumberPlate && existingNumberPlate.userId !== user.id) {
+      return NextResponse.json(
+        { error: "Number plate already in use" },
+        { status: 409 }
+      );
+    }
+
+    await prisma.$transaction(
+      async (tx) => {
+        if (profilePictureResult) {
+          await tx.user.update({
+            where: { id: user.id },
+            data: { image: profilePictureResult.url },
+          });
+        }
+
+        // Use UPSERT here
+        await tx.driver.upsert({
+          where: { userId: user.id },
+          create: {
+            userId: user.id,
+            profilePicture: profilePictureResult || undefined,
+            carPicture: carPictureResult || undefined,
+            numberPlate,
+            license,
+            licenseExpiry: new Date(licenseExpiry),
+            roadworthySticker,
+            roadworthyExpiry: new Date(roadworthyExpiry),
+            insuranceSticker,
+            ghanaCard,
+          },
+          update: {
+            profilePicture: profilePictureResult || undefined,
+            carPicture: carPictureResult || undefined,
+            numberPlate,
+            license,
+            licenseExpiry: new Date(licenseExpiry),
+            roadworthySticker,
+            roadworthyExpiry: new Date(roadworthyExpiry),
+            insuranceSticker,
+            ghanaCard,
+          },
+        });
+      },
+      { isolationLevel: "Serializable" }
+    );
 
     return NextResponse.json(
       { message: "KYC updated successfully" },
