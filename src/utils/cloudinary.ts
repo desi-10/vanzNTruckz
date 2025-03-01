@@ -16,7 +16,7 @@ export async function uploadFile(path: string, file: File | null) {
 
   const fileUri = `data:${mimeType};${encoding},${base64Data}`;
 
-  const uploadedEbook = await cloudinary.uploader.upload(fileUri, {
+  const uploadedFile = await cloudinary.uploader.upload(fileUri, {
     invalidate: true,
     resource_type: "auto",
     filename_override: file.name,
@@ -25,10 +25,10 @@ export async function uploadFile(path: string, file: File | null) {
   });
 
   return {
-    url: uploadedEbook.secure_url,
-    id: uploadedEbook.public_id,
-    assetId: uploadedEbook.asset_id,
-    originalUlr: uploadedEbook.url,
+    url: uploadedFile.secure_url,
+    id: uploadedFile.public_id,
+    assetId: uploadedFile.asset_id,
+    originalUlr: uploadedFile.url,
   };
 }
 

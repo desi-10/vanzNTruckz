@@ -3,10 +3,9 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url  	    = env("DATABASE_URL") 
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
-
 
 enum UserRole {
   SUPER_ADMIN
@@ -46,6 +45,12 @@ enum PaymentStatus {
   PAID
   FAILED
   REFUNDED
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
@@ -128,31 +133,31 @@ model TwoFactorConfimation {
 }
 
 model Driver {
-  userId          String    @id
-  license         String?   @unique
-  vehicleType     String?
-  status          Boolean   @default(true) // Active or inactive
+  userId      String  @id
+  license     String? @unique
+  vehicleType String?
+  status      Boolean @default(true) // Active or inactive
 
   // New KYC Fields
-  profilePicture     Json?   // Profile Picture
-  carPicture        Json?   // Picture of Car
+  profilePicture    Json? // Profile Picture
+  carPicture        Json? // Picture of Car
   numberPlate       String?   @unique
   licenseExpiry     DateTime? // License Expiry Date
-  roadworthySticker String?   // Roadworthy Sticker
+  roadworthySticker String? // Roadworthy Sticker
   roadworthyExpiry  DateTime? // Roadworthy Expiry Date
-  insuranceSticker  String?   // Insurance Sticker
-  ghanaCard         String?   // Optional Ghana Card
+  insuranceSticker  String? // Insurance Sticker
+  ghanaCard         String? // Optional Ghana Card
+  kycStatus         KycStatus @default(PENDING)
 
-  orders      Order[]
-  dispatches  Dispatch[]
-  bids        Bid[]
+  orders     Order[]
+  dispatches Dispatch[]
+  bids       Bid[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
-
 
 model Dispatch {
   id       String         @id @default(cuid())
@@ -173,10 +178,17 @@ model Order {
   driverId    String?
   priceId     String?
   finalPrice  Float?
+  
+  deliveryAddress String?
+  pickUpAddress String?
+  pickUpTime String?
+  deliveryTime String?
+  
   status      OrderStatus  @default(PENDING)
   bids        Bid[]
   transaction Transaction?
   dispatch    Dispatch?
+  driverSnapshot Json?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -185,7 +197,6 @@ model Order {
   driver   Driver?  @relation(fields: [driverId], references: [userId], onDelete: SetNull)
   price    Pricing? @relation(fields: [priceId], references: [id], onDelete: Restrict)
 }
-
 
 model Transaction {
   id            String        @id @default(cuid())
@@ -203,17 +214,17 @@ model Transaction {
 }
 
 model Bid {
-  id      String     @id @default(cuid())
-  orderId String     @unique
+  id       String     @id @default(cuid())
+  orderId  String     @unique
   driverId String
-  amount  Float
-  status  BillStatus @default(PENDING)
+  amount   Float
+  status   BillStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  driver  Driver     @relation(fields: [driverId], references: [userId], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [userId], onDelete: Cascade)
 }
 
 model Pricing {

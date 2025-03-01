@@ -1,16 +1,13 @@
 import { prisma } from "@/lib/db";
 import { z } from "zod";
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { validateJWT } from "@/utils/jwt";
+import { auth } from "@/auth";
 
-// ✅ Zod Schema for Creating Orders
-const OrderSchema = z.object({
-  customerId: z.string().min(1, "Customer ID is required"),
-  driverId: z.string().optional(),
-  finalPrice: z.number().positive(),
-  status: z.enum(["PENDING", "IN_PROGRESS", "COMPLETED"]),
-  priceId: z.string().optional(),
+export const OrderSchema = z.object({
+  vehicleType: z.string({ required_error: "Vehicle type is required" }),
+  deliveryAddress: z.string({ required_error: "Delivery address is required" }),
+  pickUpAddress: z.string({ required_error: "Pickup address is required" }),
 });
 
 /** ✅ GET - Fetch Paginated Orders */
@@ -74,11 +71,11 @@ export const GET = async (request: Request) => {
   }
 };
 
-/** ✅ POST - Create a New Order */
 export const POST = async (request: Request) => {
   const session = await auth();
   const user = await validateJWT(request);
-  if ((session && session?.user.role !== "ADMIN") || !user) {
+
+  if (!session || !user || user.role !== "DRIVER") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -93,16 +90,44 @@ export const POST = async (request: Request) => {
       );
     }
 
+    const { vehicleType, pickUpAddress, deliveryAddress } = parsedData.data;
+
+    // Filter drivers by vehicleType
+    const drivers = await prisma.user.findMany({
+      where: {
+        role: "DRIVER",
+        driverProfile: {
+          vehicleType,
+          kycStatus: "APPROVED",
+        },
+      },
+    });
+
+    if (drivers.length === 0) {
+      return NextResponse.json(
+        { error: "No drivers available" },
+        { status: 404 }
+      );
+    }
+
     const newOrder = await prisma.order.create({
       data: {
-        customerId: parsedData.data.customerId,
-        driverId: parsedData.data.driverId,
-        finalPrice: parsedData.data.finalPrice,
-        status: parsedData.data.status,
-        priceId: parsedData.data.priceId,
+        customerId: user.id,
+        pickUpAddress,
+        deliveryAddress,
       },
-      include: { customer: true, driver: true },
+      include: { customer: true },
     });
+
+    // Send Messages to Available Drivers
+    await Promise.all(
+      drivers.map(async (driver) => {
+        // Example message function
+        console.log(
+          `Message sent to driver: ${driver.name} -  ${driver.phone}`
+        );
+      })
+    );
 
     return NextResponse.json(
       { message: "Order created successfully", data: newOrder },

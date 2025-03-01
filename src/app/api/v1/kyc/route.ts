@@ -11,6 +11,7 @@ const kycSchema = z.object({
   carPicture: z.custom<File>((file) => file instanceof File, {
     message: "Invalid car picture",
   }),
+  vehicleType: z.string(),
   numberPlate: z.string(),
   license: z.string(),
   licenseExpiry: z.string(),
@@ -52,6 +53,7 @@ export const PATCH = async (request: Request) => {
       profilePicture,
       carPicture,
       numberPlate,
+      vehicleType,
       license,
       licenseExpiry,
       roadworthySticker,
@@ -148,6 +150,7 @@ export const PATCH = async (request: Request) => {
             userId: user.id,
             profilePicture: profilePictureResult || undefined,
             carPicture: carPictureResult || undefined,
+            vehicleType,
             numberPlate,
             license,
             licenseExpiry: new Date(licenseExpiry),
@@ -159,6 +162,7 @@ export const PATCH = async (request: Request) => {
           update: {
             profilePicture: profilePictureResult || undefined,
             carPicture: carPictureResult || undefined,
+            vehicleType,
             numberPlate,
             license,
             licenseExpiry: new Date(licenseExpiry),
@@ -173,7 +177,7 @@ export const PATCH = async (request: Request) => {
     );
 
     return NextResponse.json(
-      { message: "KYC updated successfully" },
+      { message: "Driver updated successfully" },
       { status: 200 }
     );
   } catch (error) {
