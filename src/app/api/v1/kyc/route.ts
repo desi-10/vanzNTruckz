@@ -23,7 +23,6 @@ const kycSchema = z.object({
 export const PATCH = async (request: Request) => {
   try {
     const user = await validateJWT(request);
-    console.log("User:", user);
 
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -138,7 +137,7 @@ export const PATCH = async (request: Request) => {
         if (profilePictureResult) {
           await tx.user.update({
             where: { id: user.id },
-            data: { image: profilePictureResult.url },
+            data: { image: profilePictureResult },
           });
         }
 
