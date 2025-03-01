@@ -12,9 +12,6 @@ export default middleware(async (req) => {
   const session = await auth();
   const nextUrl = req.nextUrl;
 
-  console.log("Next URL:", nextUrl);
-  console.log("Session:", session);
-
   if (
     session?.user &&
     ["/login", "/forgot-password", "/reset-password"].includes(nextUrl.pathname)

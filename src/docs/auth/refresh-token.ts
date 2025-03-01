@@ -74,11 +74,7 @@ const refreshTokenDocs = {
               schema: {
                 type: "object",
                 properties: {
-                  success: {
-                    type: "boolean",
-                    example: false,
-                  },
-                  message: {
+                  error: {
                     type: "string",
                     example: "Invalid or expired refresh token",
                   },
@@ -94,11 +90,7 @@ const refreshTokenDocs = {
               schema: {
                 type: "object",
                 properties: {
-                  success: {
-                    type: "boolean",
-                    example: false,
-                  },
-                  message: {
+                  error: {
                     type: "string",
                     example: "Internal server error",
                   },
