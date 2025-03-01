@@ -83,6 +83,13 @@ export const PATCH = async (request: Request) => {
     }
 
     if (carPicture) {
+      if (
+        user.driverProfile?.carPicture &&
+        typeof user.driverProfile?.carPicture === "object" &&
+        "id" in user.driverProfile?.carPicture
+      ) {
+        await deleteFile((user.driverProfile.carPicture as { id: string }).id);
+      }
       const carPromise = uploadFile("drivers", carPicture).then((result) => {
         if (!result) {
           throw new Error("Invalid car picture");

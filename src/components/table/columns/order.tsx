@@ -13,13 +13,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
-import { Bill, Order } from "@prisma/client";
+import { Bid, Order } from "@prisma/client";
 import { Badge } from "@/components/ui/badge";
 
 type OrderTable = Order & {
   customer: { name: string; email: string; phone: string; address: string };
   driver: { user: { name: string } };
-  bill: Bill[];
+  bids: Bid[];
   transaction: { amount: number; paymentMethod: string; status: string };
   dispatch: { status: string };
 };

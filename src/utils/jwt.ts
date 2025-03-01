@@ -56,7 +56,14 @@ export const validateJWT = async (req: Request) => {
 
     return await prisma.user.findUnique({
       where: { id: (decodedToken as JwtPayload).userId },
-      select: { id: true, email: true, name: true, role: true, image: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        role: true,
+        image: true,
+        driverProfile: true,
+      },
     });
   } catch (error) {
     console.error("JWT validation failed:", error);
