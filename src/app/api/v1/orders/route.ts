@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { validateJWT } from "@/utils/jwt";
 import { auth } from "@/auth";
 
-export const OrderSchema = z.object({
+const OrderSchema = z.object({
   vehicleType: z.string({ required_error: "Vehicle type is required" }),
   deliveryAddress: z.string({ required_error: "Delivery address is required" }),
   pickUpAddress: z.string({ required_error: "Pickup address is required" }),
