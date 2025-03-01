@@ -23,7 +23,6 @@ const kycSchema = z.object({
 export const PATCH = async (request: Request) => {
   try {
     const user = await validateJWT(request);
-
     console.log("User:", user);
 
     if (!user || user.role !== "DRIVER") {
@@ -123,9 +122,22 @@ export const PATCH = async (request: Request) => {
         });
       }
 
-      await tx.driver.update({
+      // Use UPSERT here
+      await tx.driver.upsert({
         where: { userId: user.id },
-        data: {
+        create: {
+          userId: user.id,
+          profilePicture: profilePictureResult || undefined,
+          carPicture: carPictureResult || undefined,
+          numberPlate,
+          license,
+          licenseExpiry: new Date(licenseExpiry),
+          roadworthySticker,
+          roadworthyExpiry: new Date(roadworthyExpiry),
+          insuranceSticker,
+          ghanaCard,
+        },
+        update: {
           profilePicture: profilePictureResult || undefined,
           carPicture: carPictureResult || undefined,
           numberPlate,
