@@ -136,7 +136,7 @@ model Driver {
   userId      String  @id
   license     String? @unique
   vehicleType String?
-  status      Boolean @default(true) // Active or inactive
+  isActive    Boolean @default(true) // Active or inactive
 
   // New KYC Fields
   profilePicture    Json? // Profile Picture
@@ -176,6 +176,9 @@ model Order {
   id          String       @id @default(cuid())
   customerId  String
   driverId    String?
+  receipientName String?
+  recepientNumber String?
+
   priceId     String?
   finalPrice  Float?
   

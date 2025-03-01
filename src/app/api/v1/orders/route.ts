@@ -5,6 +5,9 @@ import { validateJWT } from "@/utils/jwt";
 import { auth } from "@/auth";
 
 const OrderSchema = z.object({
+  receipientName: z.string({ required_error: "Recipient name is required" }),
+  recepientNumber: z.string({ required_error: "Recipient number is required" }),
+
   vehicleType: z.string({ required_error: "Vehicle type is required" }),
   deliveryAddress: z.string({ required_error: "Delivery address is required" }),
   pickUpAddress: z.string({ required_error: "Pickup address is required" }),
@@ -12,10 +15,10 @@ const OrderSchema = z.object({
 
 /** ✅ GET - Fetch Paginated Orders */
 export const GET = async (request: Request) => {
-  // const session = await auth();
-  // if (!session || session.user.role !== "ADMIN") {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
+  const session = await auth();
+  if (!session || session.user.role !== "ADMIN") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -90,7 +93,13 @@ export const POST = async (request: Request) => {
       );
     }
 
-    const { vehicleType, pickUpAddress, deliveryAddress } = parsedData.data;
+    const {
+      vehicleType,
+      pickUpAddress,
+      deliveryAddress,
+      receipientName,
+      recepientNumber,
+    } = parsedData.data;
 
     // Filter drivers by vehicleType
     const drivers = await prisma.user.findMany({
@@ -115,8 +124,10 @@ export const POST = async (request: Request) => {
         customerId: user.id,
         pickUpAddress,
         deliveryAddress,
+        receipientName,
+        recepientNumber,
       },
-      include: { customer: true },
+      include: { customer: { select: { id: true, name: true } } },
     });
 
     // Send Messages to Available Drivers
