@@ -4,6 +4,7 @@ import forgotPasswordDocs from "@/docs/auth/reset-password";
 import otpDocs from "@/docs/auth/otp-generation";
 import { createSwaggerSpec } from "next-swagger-doc";
 import refreshTokenDocs from "@/docs/auth/refresh-token";
+import kycDocs from "@/docs/auth/kyc";
 
 export const getApiDocs = async () => {
   const spec = createSwaggerSpec({
@@ -31,6 +32,7 @@ export const getApiDocs = async () => {
         ...otpDocs,
         ...forgotPasswordDocs,
         ...refreshTokenDocs,
+        ...kycDocs,
       },
     },
   });
