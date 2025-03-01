@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
-import { User } from "@prisma/client";
+import { Driver, User } from "@prisma/client";
 import { generateTokens } from "@/utils/jwt";
 
 // Define the validation schema
@@ -24,15 +24,21 @@ export async function POST(req: Request) {
       );
     }
 
-    let user: User | null = null;
+    let user: (User & { driverProfile: Driver | null }) | null = null;
 
     // Check if identifier is an email
     if (/^\S+@\S+\.\S+$/.test(identifier)) {
-      user = await prisma.user.findUnique({ where: { email: identifier } });
+      user = await prisma.user.findUnique({
+        where: { email: identifier },
+        include: { driverProfile: true },
+      });
     }
     // Check if identifier is a phone number
     else if (/^\d{10,15}$/.test(identifier)) {
-      user = await prisma.user.findUnique({ where: { phone: identifier } });
+      user = await prisma.user.findUnique({
+        where: { phone: identifier },
+        include: { driverProfile: true },
+      });
     }
     // Invalid input
     else {
@@ -73,6 +79,9 @@ export async function POST(req: Request) {
           address: user.address,
           role: user.role,
           image: user.image,
+          ...(user.role === "DRIVER"
+            ? { driverProfile: user.driverProfile }
+            : {}),
           ...token,
         },
       },
