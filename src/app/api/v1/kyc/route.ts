@@ -88,7 +88,7 @@ export const PATCH = async (request: Request) => {
       ) {
         await deleteFile((user.driverProfile.carPicture as { id: string }).id);
       }
-      const carPromise = uploadFile("drivers", carPicture).then((result) => {
+      const carPromise = uploadFile("cars", carPicture).then((result) => {
         if (!result) {
           throw new Error("Invalid car picture");
         }
