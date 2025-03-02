@@ -3,7 +3,7 @@ const loginDocs = {
     post: {
       summary: "User Login",
       description:
-        "Authenticates a user using either an email or phone number and returns a JWT token upon successful login.",
+        "Authenticates a user using either an email or phone number and returns JWT tokens upon successful login.",
       tags: ["Authentication"],
       requestBody: {
         required: true,
@@ -66,11 +66,37 @@ const loginDocs = {
                       },
                       role: {
                         type: "string",
-                        example: "USER",
+                        example: "DRIVER",
                       },
                       image: {
-                        type: "string",
-                        example: "https://example.com/user.jpg",
+                        type: "object",
+                        properties: {
+                          url: {
+                            type: "string",
+                            example:
+                              "https://res.cloudinary.com/vansn-assets/image/upload/v1673919386/driver/cl8jkwz8e0001z2k3h9q.jpg",
+                          },
+                          id: {
+                            type: "string",
+                            example: "driver/cl8jkwz8e0001z2k3h9q",
+                          },
+                        },
+                      },
+                      driverProfile: {
+                        type: "object",
+                        nullable: true,
+                        description:
+                          "Driver profile information (Only returned if the user is a DRIVER)",
+                        properties: {
+                          kycStatus: {
+                            type: "string",
+                            example: "APPROVED",
+                          },
+                          isActive: {
+                            type: "boolean",
+                            example: true,
+                          },
+                        },
                       },
                       accessToken: {
                         type: "string",

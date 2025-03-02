@@ -26,6 +26,10 @@ const kycDocs = {
                   format: "binary",
                   description: "Car picture",
                 },
+                phoneNumber: {
+                  type: "string",
+                  description: "Driver's phone number",
+                },
                 numberPlate: {
                   type: "string",
                   description: "Car number plate",
@@ -60,6 +64,7 @@ const kycDocs = {
               required: [
                 "profilePicture",
                 "carPicture",
+                "phoneNumber",
                 "numberPlate",
                 "license",
                 "licenseExpiry",

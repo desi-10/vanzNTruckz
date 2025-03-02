@@ -11,6 +11,7 @@ const kycSchema = z.object({
   carPicture: z.custom<File>((file) => file instanceof File, {
     message: "Invalid car picture",
   }),
+  phoneNumber: z.string(),
   vehicleType: z.string(),
   numberPlate: z.string(),
   license: z.string(),
@@ -33,6 +34,7 @@ export const PATCH = async (request: Request) => {
     const validate = kycSchema.safeParse({
       profilePicture: body.get("profilePicture"),
       carPicture: body.get("carPicture"),
+      phoneNumber: body.get("phoneNumber"),
       numberPlate: body.get("numberPlate"),
       license: body.get("license"),
       licenseExpiry: body.get("licenseExpiry"),
@@ -52,6 +54,7 @@ export const PATCH = async (request: Request) => {
     const {
       profilePicture,
       carPicture,
+      phoneNumber,
       numberPlate,
       vehicleType,
       license,
@@ -139,7 +142,7 @@ export const PATCH = async (request: Request) => {
         if (profilePictureResult) {
           await tx.user.update({
             where: { id: user.id },
-            data: { image: profilePictureResult },
+            data: { image: profilePictureResult, phone: phoneNumber },
           });
         }
 
