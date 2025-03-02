@@ -78,7 +78,7 @@ export const POST = async (request: Request) => {
   const session = await auth();
   const user = await validateJWT(request);
 
-  if (!session || !user || user.role !== "DRIVER") {
+  if (!session || !user || user.role !== "CUSTOMER") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -101,7 +101,7 @@ export const POST = async (request: Request) => {
       recepientNumber,
     } = parsedData.data;
 
-    // Filter drivers by vehicleType
+    // Find available drivers
     const drivers = await prisma.user.findMany({
       where: {
         role: "DRIVER",
@@ -119,29 +119,45 @@ export const POST = async (request: Request) => {
       );
     }
 
-    const newOrder = await prisma.order.create({
-      data: {
-        customerId: user.id,
-        pickUpAddress,
-        deliveryAddress,
-        receipientName,
-        recepientNumber,
-      },
-      include: { customer: { select: { id: true, name: true } } },
+    // Run all database operations in a Prisma transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // Create the order
+      const newOrder = await tx.order.create({
+        data: {
+          customerId: user.id || session.user.id || "",
+          pickUpAddress,
+          deliveryAddress,
+          receipientName,
+          recepientNumber,
+          vehicleType,
+        },
+        include: { customer: { select: { id: true, name: true } } },
+      });
+
+      // Create bids and inbox messages for drivers
+      await Promise.all(
+        drivers.map(async (driver) => {
+          await tx.inbox.create({
+            data: {
+              userId: driver.id,
+              message: `New delivery request for Order #${newOrder.id}`,
+              type: "BID",
+              orderId: newOrder.id,
+            },
+          });
+
+          // Example message function (Replace with actual notification logic)
+          console.log(
+            `Message sent to driver: ${driver.name} - ${driver.phone} for Order: ${newOrder.id}`
+          );
+        })
+      );
+
+      return newOrder;
     });
 
-    // Send Messages to Available Drivers
-    await Promise.all(
-      drivers.map(async (driver) => {
-        // Example message function
-        console.log(
-          `Message sent to driver: ${driver.name} -  ${driver.phone}`
-        );
-      })
-    );
-
     return NextResponse.json(
-      { message: "Order created successfully", data: newOrder },
+      { message: "Order created successfully", data: result },
       { status: 201 }
     );
   } catch (error) {

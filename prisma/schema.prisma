@@ -21,9 +21,10 @@ enum DispatchStatus {
   DELIVERED
 }
 
-enum BillStatus {
+enum BidStatus {
   PENDING
-  CONFIRMED
+  ACCEPTED
+  REJECTED
 }
 
 enum OrderStatus {
@@ -53,10 +54,20 @@ enum KycStatus {
   REJECTED
 }
 
+enum InboxType {
+  BID
+  ORDER
+  DISPATCH
+  DELIVERY
+  PICKUP
+  RETURN
+  CANCEL
+}
+
 model User {
   id                    String                @id @default(cuid())
   name                  String
-  phone                 String?               @unique // Added phone field
+  phone                 String?               @unique
   email                 String?               @unique
   address               String?
   emailVerified         DateTime?
@@ -65,11 +76,13 @@ model User {
   password              String?
   role                  UserRole              @default(CUSTOMER)
   isTwoFactorEnabled    Boolean               @default(false)
-  accounts              Account[]
   twoFactorConfirmation TwoFactorConfimation?
-  orders                Order[] // Customer orders
-  driverProfile         Driver? // If user is a driver
-  transactions          Transaction[] // Payments made by customer
+
+  accounts      Account[]
+  orders        Order[]
+  driverProfile Driver?
+  transactions  Transaction[]
+  inbox         Inbox[]
 }
 
 model Account {
@@ -85,7 +98,8 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
 }
@@ -136,17 +150,16 @@ model Driver {
   userId      String  @id
   license     String? @unique
   vehicleType String?
-  isActive    Boolean @default(true) // Active or inactive
+  isActive    Boolean @default(true)
 
-  // New KYC Fields
-  profilePicture    Json? // Profile Picture
-  carPicture        Json? // Picture of Car
+  profilePicture    Json?
+  carPicture        Json?
   numberPlate       String?   @unique
-  licenseExpiry     DateTime? // License Expiry Date
-  roadworthySticker String? // Roadworthy Sticker
-  roadworthyExpiry  DateTime? // Roadworthy Expiry Date
-  insuranceSticker  String? // Insurance Sticker
-  ghanaCard         String? // Optional Ghana Card
+  licenseExpiry     DateTime?
+  roadworthySticker String?
+  roadworthyExpiry  DateTime?
+  insuranceSticker  String?
+  ghanaCard         String?
   kycStatus         KycStatus @default(PENDING)
 
   orders     Order[]
@@ -163,7 +176,7 @@ model Dispatch {
   id       String         @id @default(cuid())
   orderId  String         @unique
   driverId String
-  status   DispatchStatus @default(ASSIGNED) // Can be ASSIGNED, IN_TRANSIT, DELIVERED, etc.
+  status   DispatchStatus @default(ASSIGNED)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -173,25 +186,26 @@ model Dispatch {
 }
 
 model Order {
-  id          String       @id @default(cuid())
-  customerId  String
-  driverId    String?
-  receipientName String?
+  id              String       @id @default(cuid())
+  customerId      String
+  driverId        String?
+  receipientName  String?
   recepientNumber String?
-
-  priceId     String?
-  finalPrice  Float?
+  priceId         String?
+  finalPrice      Float?
   
+  vehicleType     String?
   deliveryAddress String?
-  pickUpAddress String?
-  pickUpTime String?
-  deliveryTime String?
-  
-  status      OrderStatus  @default(PENDING)
-  bids        Bid[]
-  transaction Transaction?
-  dispatch    Dispatch?
-  driverSnapshot Json?
+  pickUpAddress   String?
+  pickUpTime      String?
+  deliveryTime    String?
+  status          OrderStatus  @default(PENDING)
+  transaction     Transaction?
+  dispatch        Dispatch?
+  driverSnapshot  Json?
+
+  bids  Bid[]
+  inbox Inbox[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -217,11 +231,11 @@ model Transaction {
 }
 
 model Bid {
-  id       String     @id @default(cuid())
-  orderId  String     @unique
+  id       String    @id @default(cuid())
+  orderId  String
   driverId String
-  amount   Float
-  status   BillStatus @default(PENDING)
+  amount   Float?
+  status   BidStatus @default(PENDING)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -236,9 +250,25 @@ model Pricing {
   baseFare    Float
   perKmRate   Float
   perMinRate  Float
-  isActive    Boolean @default(true) // Mark outdated pricing as inactive
-  orders      Order[]
+  isActive    Boolean @default(true)
+
+  orders Order[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model Inbox {
+  id      String    @id @default(cuid())
+  userId  String
+  orderId String?
+  message String
+  isRead  Boolean   @default(false)
+  type    InboxType @default(BID)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user  User   @relation(fields: [userId], references: [id])
 }

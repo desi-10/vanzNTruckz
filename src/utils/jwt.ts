@@ -7,10 +7,10 @@ const EMAIL_SECRET = process.env.EMAIL_TOKEN_SECRET || "emailsecret";
 
 export const generateTokens = (userId: string) => {
   const accessToken = jwt.sign({ userId }, ACCESS_SECRET, {
-    expiresIn: "15m",
+    expiresIn: "1m",
   });
   const refreshToken = jwt.sign({ userId }, REFRESH_SECRET, {
-    expiresIn: "7d",
+    expiresIn: "10m",
   });
 
   return { accessToken, refreshToken };
