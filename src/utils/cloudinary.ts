@@ -35,3 +35,22 @@ export async function uploadFile(path: string, file: File | null) {
 export const deleteFile = async (fileId: string) => {
   await cloudinary.uploader.destroy(fileId);
 };
+
+export const uploadFileToCloudinary = async (
+  folder: string,
+  file: File | null
+) => {
+  if (!file) return null;
+
+  return new Promise((resolve) => {
+    console.log(`Uploading ${file.name} to ${folder}...`);
+    setTimeout(() => {
+      const result = {
+        id: `${Date.now()}`,
+        url: `http://localhost:300/${folder}/${file.name}`,
+      };
+      console.log("Upload result:", result);
+      resolve(result);
+    }, 2000); // Simulate 2 seconds delay
+  });
+};

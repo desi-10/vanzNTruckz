@@ -162,6 +162,7 @@ model Driver {
   roadworthySticker Json?
   roadworthyExpiry  DateTime?
   insuranceSticker  Json?
+  insurance         String?
   ghanaCard        String?
   ghanaCardPicture Json?
   kycStatus        KycStatus @default(PENDING)

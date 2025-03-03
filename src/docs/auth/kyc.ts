@@ -11,6 +11,7 @@ const kycDocs = {
         },
       ],
       requestBody: {
+        required: true,
         content: {
           "multipart/form-data": {
             schema: {
@@ -19,32 +20,36 @@ const kycDocs = {
                 profilePicture: {
                   type: "string",
                   format: "binary",
-                  description: "Driver's profile picture",
+                  description: "Profile picture of the driver",
                 },
                 carPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Car picture",
+                  description: "Picture of the car",
                 },
                 phoneNumber: {
                   type: "string",
+                  example: "+233123456789",
                   description: "Driver's phone number",
                 },
                 vehicleType: {
                   type: "string",
-                  description: "Type of vehicle (e.g., Sedan, SUV)",
+                  example: "SUV",
+                  description: "Type of vehicle",
                 },
                 numberPlate: {
                   type: "string",
-                  description: "Car number plate",
+                  example: "GR-1234-23",
+                  description: "Vehicle number plate",
                 },
                 numberPlatePicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the car's number plate",
+                  description: "Picture of the number plate",
                 },
                 license: {
                   type: "string",
+                  example: "DL123456789",
                   description: "Driver's license number",
                 },
                 licensePicture: {
@@ -55,13 +60,10 @@ const kycDocs = {
                 licenseExpiry: {
                   type: "string",
                   format: "date",
-                  description: "Driver's license expiry date (YYYY-MM-DD)",
+                  example: "2025-12-31",
+                  description: "Expiry date of the driver's license",
                 },
                 roadworthySticker: {
-                  type: "string",
-                  description: "Roadworthy sticker number",
-                },
-                roadworthyStickerPicture: {
                   type: "string",
                   format: "binary",
                   description: "Picture of the roadworthy sticker",
@@ -69,48 +71,37 @@ const kycDocs = {
                 roadworthyExpiry: {
                   type: "string",
                   format: "date",
-                  description: "Roadworthy sticker expiry date (YYYY-MM-DD)",
+                  example: "2025-06-30",
+                  description: "Expiry date of the roadworthy sticker",
                 },
                 insuranceSticker: {
-                  type: "string",
-                  description: "Insurance sticker number",
-                },
-                insuranceStickerPicture: {
                   type: "string",
                   format: "binary",
                   description: "Picture of the insurance sticker",
                 },
+                insurance: {
+                  type: "string",
+                  example: "Insurance Company Name",
+                  description: "Name of the insurance company",
+                },
                 ghanaCard: {
                   type: "string",
-                  description: "Ghana card number (optional)",
+                  example: "GHA123456789",
+                  description: "Ghana Card number (optional)",
                 },
                 ghanaCardPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of Ghana Card (optional)",
+                  description: "Picture of the Ghana Card (optional)",
                 },
               },
-              required: [
-                "profilePicture",
-                "carPicture",
-                "phoneNumber",
-                "vehicleType",
-                "numberPlate",
-                "numberPlatePicture",
-                "license",
-                "licensePicture",
-                "licenseExpiry",
-                "roadworthySticker",
-                "roadworthyExpiry",
-                "insuranceSticker",
-              ],
             },
           },
         },
       },
       responses: {
         200: {
-          description: "KYC updated successfully",
+          description: "Driver updated successfully",
           content: {
             "application/json": {
               schema: {
@@ -125,75 +116,14 @@ const kycDocs = {
             },
           },
         },
-        400: {
-          description: "Invalid data or image upload failed",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "Invalid profile picture",
-                  },
-                  errors: {
-                    type: "object",
-                    example: {
-                      profilePicture: { _errors: ["Invalid profile picture"] },
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
         401: {
           description: "Unauthorized",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "Unauthorized",
-                  },
-                },
-              },
-            },
-          },
         },
         409: {
-          description: "License or Number Plate already in use",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "License already in use",
-                  },
-                },
-              },
-            },
-          },
+          description: "Conflict - License or Number Plate already in use",
         },
         500: {
           description: "Internal Server Error",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  message: {
-                    type: "string",
-                    example: "Internal Server Error",
-                  },
-                },
-              },
-            },
-          },
         },
       },
     },

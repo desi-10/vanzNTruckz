@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/db";
 import { deleteFile, uploadFile } from "@/utils/cloudinary";
+import { getUserById } from "@/data/user";
 import { validateJWT } from "@/utils/jwt";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -11,7 +12,10 @@ const kycSchema = z.object({
   carPicture: z.custom<File>((file) => file instanceof File, {
     message: "Invalid car picture",
   }),
-  phoneNumber: z.string(),
+  phoneNumber: z
+    .string()
+    .min(10, "Invalid phone number")
+    .max(10, "Invalid phone number"),
   vehicleType: z.string(),
   numberPlate: z.string(),
   numberPlatePicture: z.custom<File>((file) => file instanceof File, {
@@ -36,7 +40,8 @@ const kycSchema = z.object({
 
 export const PATCH = async (request: Request) => {
   try {
-    const user = await validateJWT(request);
+    const id = validateJWT(request);
+    const user = await getUserById(id);
 
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,15 +62,19 @@ export const PATCH = async (request: Request) => {
       roadworthySticker: body.get("roadworthySticker"),
       roadworthyExpiry: body.get("roadworthyExpiry"),
       insuranceSticker: body.get("insuranceSticker"),
+      insurance: body.get("insurance"),
       ghanaCard: body.get("ghanaCard"),
       ghanaCardPicture: body.get("ghanaCardPicture"),
     });
 
     if (!validate.success) {
-      return NextResponse.json({
-        error: "Invalid data",
-        errors: validate.error.format(),
-      });
+      return NextResponse.json(
+        {
+          error: "Invalid data",
+          errors: validate.error.format(),
+        },
+        { status: 400 }
+      );
     }
 
     const {
@@ -81,6 +90,7 @@ export const PATCH = async (request: Request) => {
       roadworthySticker,
       roadworthyExpiry,
       insuranceSticker,
+      insurance,
       ghanaCard,
       ghanaCardPicture,
     } = validate.data;
@@ -88,6 +98,25 @@ export const PATCH = async (request: Request) => {
     // Delete old profile picture if exists
     if (user.image && typeof user.image === "object" && "id" in user.image) {
       await deleteFile((user.image as { id: string }).id);
+    }
+
+    const [existingLicense, existingNumberPlate] = await Promise.all([
+      prisma.driver.findUnique({ where: { license } }),
+      prisma.driver.findUnique({ where: { numberPlate } }),
+    ]);
+
+    if (existingLicense && existingLicense.userId !== user.id) {
+      return NextResponse.json(
+        { error: "License already in use" },
+        { status: 409 }
+      );
+    }
+
+    if (existingNumberPlate && existingNumberPlate.userId !== user.id) {
+      return NextResponse.json(
+        { error: "Number plate already in use" },
+        { status: 409 }
+      );
     }
 
     const uploadFileToCloudinary = async (
@@ -121,73 +150,55 @@ export const PATCH = async (request: Request) => {
       ghanaCardPictureResult,
     ] = uploadResults;
 
-    const [existingLicense, existingNumberPlate] = await Promise.all([
-      prisma.driver.findUnique({ where: { license } }),
-      prisma.driver.findUnique({ where: { numberPlate } }),
-    ]);
-
-    if (existingLicense && existingLicense.userId !== user.id) {
-      return NextResponse.json(
-        { error: "License already in use" },
-        { status: 409 }
-      );
-    }
-
-    if (existingNumberPlate && existingNumberPlate.userId !== user.id) {
-      return NextResponse.json(
-        { error: "Number plate already in use" },
-        { status: 409 }
-      );
-    }
-
-    await prisma.$transaction(async (tx) => {
-      // Update user profile picture and phone number
+    const result = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          image: profilePictureResult || undefined,
           phone: phoneNumber,
+          image: profilePictureResult || {},
         },
       });
 
-      await tx.driver.upsert({
+      return await tx.driver.upsert({
         where: { userId: user.id },
-        create: {
-          userId: user.id,
-          vehicleType,
-          numberPlate,
-          license,
-          licenseExpiry: new Date(licenseExpiry),
-          roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker: insuranceStickerResult || undefined,
-          ghanaCard,
-          profilePicture: profilePictureResult || undefined,
-          carPicture: carPictureResult || undefined,
-          numberPlatePicture: numberPlatePictureResult || undefined,
-          licensePicture: licensePictureResult || undefined,
-          roadworthySticker: roadworthyStickerResult || undefined,
-          ghanaCardPicture: ghanaCardPictureResult || undefined,
-        },
         update: {
           vehicleType,
           numberPlate,
           license,
           licenseExpiry: new Date(licenseExpiry),
           roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker: insuranceStickerResult || undefined,
+          insuranceSticker: insuranceStickerResult || {},
           ghanaCard,
-          profilePicture: profilePictureResult || undefined,
-          carPicture: carPictureResult || undefined,
-          numberPlatePicture: numberPlatePictureResult || undefined,
-          licensePicture: licensePictureResult || undefined,
-          roadworthySticker: roadworthyStickerResult || undefined,
-          ghanaCardPicture: ghanaCardPictureResult || undefined,
+          insurance,
+          profilePicture: profilePictureResult || {},
+          carPicture: carPictureResult || {},
+          numberPlatePicture: numberPlatePictureResult || {},
+          licensePicture: licensePictureResult || {},
+          roadworthySticker: roadworthyStickerResult || {},
+          ghanaCardPicture: ghanaCardPictureResult || {},
+        },
+        create: {
+          user: { connect: { id: user.id } },
+          vehicleType,
+          numberPlate,
+          license,
+          licenseExpiry: new Date(licenseExpiry),
+          roadworthyExpiry: new Date(roadworthyExpiry),
+          insuranceSticker: insuranceStickerResult || {},
+          ghanaCard,
+          insurance,
+          profilePicture: profilePictureResult || {},
+          carPicture: carPictureResult || {},
+          numberPlatePicture: numberPlatePictureResult || {},
+          licensePicture: licensePictureResult || {},
+          roadworthySticker: roadworthyStickerResult || {},
+          ghanaCardPicture: ghanaCardPictureResult || {},
         },
       });
     });
 
     return NextResponse.json(
-      { message: "Driver updated successfully" },
+      { message: "Driver updated successfully", data: result },
       { status: 200 }
     );
   } catch (error) {
