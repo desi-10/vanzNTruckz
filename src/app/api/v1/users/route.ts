@@ -39,13 +39,8 @@ export const GET = async (request: Request) => {
     const users = await prisma.user.findMany({
       skip,
       take: limit,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        driverProfile: true,
-        orders: true,
-      },
+      include: { driverProfile: true },
+      omit: { password: true },
     });
 
     const totalUsers = await prisma.user.count();

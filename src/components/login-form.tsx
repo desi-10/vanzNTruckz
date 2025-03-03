@@ -116,7 +116,7 @@ export function LoginForm({
                 <Button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#f77f1e] text-white hover:bg-[#f77f1e]/80 hover:text-white"
+                  className="w-full bg-primaryColor text-white hover:bg-primaryColor/80 hover:text-white"
                 >
                   {isSubmitting ? <Loader /> : "Login"}
                 </Button>
@@ -133,11 +133,11 @@ export function LoginForm({
       </Card>
       <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4">
         By clicking continue, you agree to our{" "}
-        <Link href="#" className="text-orange-500">
+        <Link href="#" className="text-primaryColor">
           Terms of Service
         </Link>{" "}
         and{" "}
-        <Link href="#" className="text-orange-500">
+        <Link href="#" className="text-primaryColor">
           Privacy Policy
         </Link>
         .

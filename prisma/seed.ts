@@ -4,27 +4,31 @@ import bcrypt from "bcryptjs";
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Seeding database...");
+  console.log("Resetting and seeding database...");
+
+  // Clear existing data
+  await prisma.$transaction([
+    prisma.dispatch.deleteMany(),
+    prisma.transaction.deleteMany(),
+    prisma.order.deleteMany(),
+    prisma.pricing.deleteMany(),
+    prisma.driver.deleteMany(),
+    prisma.user.deleteMany(),
+  ]);
 
   // Hash password
   const hashedPassword = await bcrypt.hash("password123", 10);
 
-  // Create Admin
-  await prisma.user.upsert({
-    where: { email: "admin@example.com" },
-    update: {},
-    create: {
-      name: "Admin User",
-      email: "admin@example.com",
-      phone: "1234567890",
-      password: hashedPassword,
-      role: "ADMIN",
-    },
-  });
-
-  // Create Customers
+  // Create Users
   await prisma.user.createMany({
     data: [
+      {
+        name: "Admin User",
+        email: "admin@example.com",
+        phone: "1234567890",
+        password: hashedPassword,
+        role: "ADMIN",
+      },
       {
         name: "John Doe",
         email: "customer@example.com",
@@ -46,18 +50,6 @@ async function main() {
         password: hashedPassword,
         role: "CUSTOMER",
       },
-    ],
-    skipDuplicates: true,
-  });
-
-  // Fetch customers
-  const allCustomers = await prisma.user.findMany({
-    where: { role: "CUSTOMER" },
-  });
-
-  // Create Drivers
-  await prisma.user.createMany({
-    data: [
       {
         name: "Delivery Driver",
         email: "driver@example.com",
@@ -83,18 +75,16 @@ async function main() {
     skipDuplicates: true,
   });
 
-  // Fetch drivers
-  const allDrivers = await prisma.user.findMany({ where: { role: "DRIVER" } });
+  const customers = await prisma.user.findMany({ where: { role: "CUSTOMER" } });
+  const drivers = await prisma.user.findMany({ where: { role: "DRIVER" } });
 
   // Create Driver Profiles
   await prisma.driver.createMany({
-    data: allDrivers.map((driver, index) => ({
+    data: drivers.map((driver, index) => ({
       userId: driver.id,
       license: `DRIVER00${index + 1}`,
       vehicleType: index % 2 === 0 ? "Motorbike" : "Car",
-      status: true,
     })),
-    skipDuplicates: true,
   });
 
   // Create Pricing Models
@@ -119,54 +109,40 @@ async function main() {
         perMinRate: 0.4,
       },
     ],
-    skipDuplicates: true,
   });
 
-  // Fetch Pricing
-  const allPricing = await prisma.pricing.findMany();
+  const pricing = await prisma.pricing.findMany();
 
-  // Create Orders
-  const orders = await Promise.all(
-    allCustomers.map(async (customer, index) => {
-      return await prisma.order.create({
-        data: {
-          customerId: customer.id,
-          driverId: allDrivers[index % allDrivers.length].id, // Assign different drivers
-          priceId: allPricing[index % allPricing.length].id,
-          finalPrice: 10 + index * 5, // Vary the price slightly
-          status: index % 2 === 0 ? "PENDING" : "COMPLETED",
-        },
-      });
-    })
-  );
+  // Create Orders & Related Data
+  for (let i = 0; i < customers.length; i++) {
+    const order = await prisma.order.create({
+      data: {
+        customerId: customers[i].id,
+        driverId: drivers[i % drivers.length].id,
+        priceId: pricing[i % pricing.length].id,
+        finalPrice: 10 + i * 5,
+        status: i % 2 === 0 ? "PENDING" : "COMPLETED",
+      },
+    });
 
-  // Create Transactions
-  await Promise.all(
-    orders.map(async (order, index) => {
-      return await prisma.transaction.create({
-        data: {
-          orderId: order.id,
-          customerId: order.customerId,
-          amount: order.finalPrice || 100 * index, // Convert to cents
-          paymentMethod: index % 2 === 0 ? "MOBILE_MONEY" : "CARD",
-          status: "PENDING",
-        },
-      });
-    })
-  );
+    await prisma.transaction.create({
+      data: {
+        orderId: order.id,
+        customerId: order.customerId,
+        amount: 10 + i * 5,
+        paymentMethod: i % 2 === 0 ? "MOBILE_MONEY" : "CARD",
+        status: "PENDING",
+      },
+    });
 
-  // Create Dispatches
-  await Promise.all(
-    orders.map(async (order) => {
-      return await prisma.dispatch.create({
-        data: {
-          orderId: order.id,
-          driverId: order.driverId!,
-          status: "ASSIGNED",
-        },
-      });
-    })
-  );
+    await prisma.dispatch.create({
+      data: {
+        orderId: order.id,
+        driverId: order.driverId!,
+        status: "ASSIGNED",
+      },
+    });
+  }
 
   console.log("Seeding complete!");
 }

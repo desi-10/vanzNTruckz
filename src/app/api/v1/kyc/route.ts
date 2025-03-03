@@ -14,12 +14,24 @@ const kycSchema = z.object({
   phoneNumber: z.string(),
   vehicleType: z.string(),
   numberPlate: z.string(),
+  numberPlatePicture: z.custom<File>((file) => file instanceof File, {
+    message: "Invalid number plate picture",
+  }),
   license: z.string(),
+  licensePicture: z.custom<File>((file) => file instanceof File, {
+    message: "Invalid license picture",
+  }),
   licenseExpiry: z.string(),
-  roadworthySticker: z.string(),
+  roadworthySticker: z.custom<File>((file) => file instanceof File, {
+    message: "Invalid roadworthy sticker picture",
+  }),
   roadworthyExpiry: z.string(),
-  insuranceSticker: z.string(),
+  insuranceSticker: z.custom<File>((file) => file instanceof File, {
+    message: "Invalid insurance sticker picture",
+  }),
+  insurance: z.string(),
   ghanaCard: z.string().optional(),
+  ghanaCardPicture: z.custom<File>((file) => file instanceof File).optional(),
 });
 
 export const PATCH = async (request: Request) => {
@@ -31,17 +43,22 @@ export const PATCH = async (request: Request) => {
     }
 
     const body = await request.formData();
+
     const validate = kycSchema.safeParse({
       profilePicture: body.get("profilePicture"),
       carPicture: body.get("carPicture"),
       phoneNumber: body.get("phoneNumber"),
+      vehicleType: body.get("vehicleType"),
       numberPlate: body.get("numberPlate"),
+      numberPlatePicture: body.get("numberPlatePicture"),
       license: body.get("license"),
+      licensePicture: body.get("licensePicture"),
       licenseExpiry: body.get("licenseExpiry"),
       roadworthySticker: body.get("roadworthySticker"),
       roadworthyExpiry: body.get("roadworthyExpiry"),
       insuranceSticker: body.get("insuranceSticker"),
       ghanaCard: body.get("ghanaCard"),
+      ghanaCardPicture: body.get("ghanaCardPicture"),
     });
 
     if (!validate.success) {
@@ -55,68 +72,54 @@ export const PATCH = async (request: Request) => {
       profilePicture,
       carPicture,
       phoneNumber,
-      numberPlate,
       vehicleType,
+      numberPlate,
+      numberPlatePicture,
       license,
+      licensePicture,
       licenseExpiry,
       roadworthySticker,
       roadworthyExpiry,
       insuranceSticker,
       ghanaCard,
+      ghanaCardPicture,
     } = validate.data;
 
-    let profilePictureResult: { url: string; id: string } | null = null;
-    let carPictureResult: { url: string; id: string } | null = null;
-
-    const uploadPromises: Promise<void>[] = [];
-
-    if (profilePicture) {
-      if (user.image && typeof user.image === "object" && "id" in user.image) {
-        await deleteFile((user.image as { id: string }).id);
-      }
-      const profilePromise = uploadFile("profile", profilePicture).then(
-        (result) => {
-          if (!result) {
-            throw new Error("Invalid profile picture");
-          }
-          profilePictureResult = result;
-        }
-      );
-      uploadPromises.push(profilePromise);
+    // Delete old profile picture if exists
+    if (user.image && typeof user.image === "object" && "id" in user.image) {
+      await deleteFile((user.image as { id: string }).id);
     }
 
-    if (carPicture) {
-      if (
-        user.driverProfile?.carPicture &&
-        typeof user.driverProfile?.carPicture === "object" &&
-        "id" in user.driverProfile?.carPicture
-      ) {
-        await deleteFile((user.driverProfile.carPicture as { id: string }).id);
-      }
-      const carPromise = uploadFile("cars", carPicture).then((result) => {
-        if (!result) {
-          throw new Error("Invalid car picture");
-        }
-        carPictureResult = result;
-      });
-      uploadPromises.push(carPromise);
-    }
+    const uploadFileToCloudinary = async (
+      folder: string,
+      file: File | null
+    ) => {
+      if (!file) return null;
+      const result = await uploadFile(folder, file);
+      if (!result) throw new Error(`Failed to upload ${folder} picture`);
+      return result;
+    };
 
-    await Promise.all(uploadPromises);
+    const uploadResults = await Promise.all([
+      uploadFileToCloudinary("profile", profilePicture),
+      uploadFileToCloudinary("cars", carPicture),
+      uploadFileToCloudinary("number_plate", numberPlatePicture),
+      uploadFileToCloudinary("license", licensePicture),
+      uploadFileToCloudinary("roadworthy", roadworthySticker),
+      uploadFileToCloudinary("insurance", insuranceSticker),
+      ghanaCardPicture &&
+        uploadFileToCloudinary("ghana_card", ghanaCardPicture),
+    ]);
 
-    if (profilePicture && !profilePictureResult) {
-      return NextResponse.json(
-        { error: "Invalid profile picture" },
-        { status: 400 }
-      );
-    }
-
-    if (carPicture && !carPictureResult) {
-      return NextResponse.json(
-        { error: "Invalid car picture" },
-        { status: 400 }
-      );
-    }
+    const [
+      profilePictureResult,
+      carPictureResult,
+      numberPlatePictureResult,
+      licensePictureResult,
+      roadworthyStickerResult,
+      insuranceStickerResult,
+      ghanaCardPictureResult,
+    ] = uploadResults;
 
     const [existingLicense, existingNumberPlate] = await Promise.all([
       prisma.driver.findUnique({ where: { license } }),
@@ -137,47 +140,51 @@ export const PATCH = async (request: Request) => {
       );
     }
 
-    await prisma.$transaction(
-      async (tx) => {
-        if (profilePictureResult) {
-          await tx.user.update({
-            where: { id: user.id },
-            data: { image: profilePictureResult, phone: phoneNumber },
-          });
-        }
+    await prisma.$transaction(async (tx) => {
+      // Update user profile picture and phone number
+      await tx.user.update({
+        where: { id: user.id },
+        data: {
+          image: profilePictureResult || undefined,
+          phone: phoneNumber,
+        },
+      });
 
-        // Use UPSERT here
-        await tx.driver.upsert({
-          where: { userId: user.id },
-          create: {
-            userId: user.id,
-            profilePicture: profilePictureResult || undefined,
-            carPicture: carPictureResult || undefined,
-            vehicleType,
-            numberPlate,
-            license,
-            licenseExpiry: new Date(licenseExpiry),
-            roadworthySticker,
-            roadworthyExpiry: new Date(roadworthyExpiry),
-            insuranceSticker,
-            ghanaCard,
-          },
-          update: {
-            profilePicture: profilePictureResult || undefined,
-            carPicture: carPictureResult || undefined,
-            vehicleType,
-            numberPlate,
-            license,
-            licenseExpiry: new Date(licenseExpiry),
-            roadworthySticker,
-            roadworthyExpiry: new Date(roadworthyExpiry),
-            insuranceSticker,
-            ghanaCard,
-          },
-        });
-      },
-      { isolationLevel: "Serializable" }
-    );
+      await tx.driver.upsert({
+        where: { userId: user.id },
+        create: {
+          userId: user.id,
+          vehicleType,
+          numberPlate,
+          license,
+          licenseExpiry: new Date(licenseExpiry),
+          roadworthyExpiry: new Date(roadworthyExpiry),
+          insuranceSticker: insuranceStickerResult || undefined,
+          ghanaCard,
+          profilePicture: profilePictureResult || undefined,
+          carPicture: carPictureResult || undefined,
+          numberPlatePicture: numberPlatePictureResult || undefined,
+          licensePicture: licensePictureResult || undefined,
+          roadworthySticker: roadworthyStickerResult || undefined,
+          ghanaCardPicture: ghanaCardPictureResult || undefined,
+        },
+        update: {
+          vehicleType,
+          numberPlate,
+          license,
+          licenseExpiry: new Date(licenseExpiry),
+          roadworthyExpiry: new Date(roadworthyExpiry),
+          insuranceSticker: insuranceStickerResult || undefined,
+          ghanaCard,
+          profilePicture: profilePictureResult || undefined,
+          carPicture: carPictureResult || undefined,
+          numberPlatePicture: numberPlatePictureResult || undefined,
+          licensePicture: licensePictureResult || undefined,
+          roadworthySticker: roadworthyStickerResult || undefined,
+          ghanaCardPicture: ghanaCardPictureResult || undefined,
+        },
+      });
+    });
 
     return NextResponse.json(
       { message: "Driver updated successfully" },

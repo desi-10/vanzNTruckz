@@ -16,7 +16,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({ title, subtitle, action }) => {
       {action && (
         <Button
           asChild
-          className="bg-orange-500 text-white hover:bg-orange-500/90"
+          className="bg-primaryColor text-white hover:bg-primaryColor/90"
         >
           {action}
         </Button>

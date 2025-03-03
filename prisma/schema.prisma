@@ -83,6 +83,7 @@ model User {
   driverProfile Driver?
   transactions  Transaction[]
   inbox         Inbox[]
+
 }
 
 model Account {
@@ -147,20 +148,23 @@ model TwoFactorConfimation {
 }
 
 model Driver {
-  userId      String  @id
-  license     String? @unique
-  vehicleType String?
-  isActive    Boolean @default(true)
+  userId             String   @id
+  license            String?  @unique
+  vehicleType        String?
+  isActive           Boolean  @default(true)
 
-  profilePicture    Json?
+  profilePicture     Json?    // Store { url, id } object
   carPicture        Json?
   numberPlate       String?   @unique
+  numberPlatePicture Json?
+  licensePicture    Json?
   licenseExpiry     DateTime?
-  roadworthySticker String?
+  roadworthySticker Json?
   roadworthyExpiry  DateTime?
-  insuranceSticker  String?
-  ghanaCard         String?
-  kycStatus         KycStatus @default(PENDING)
+  insuranceSticker  Json?
+  ghanaCard        String?
+  ghanaCardPicture Json?
+  kycStatus        KycStatus @default(PENDING)
 
   orders     Order[]
   dispatches Dispatch[]
@@ -171,6 +175,7 @@ model Driver {
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+
 
 model Dispatch {
   id       String         @id @default(cuid())
@@ -193,7 +198,7 @@ model Order {
   recepientNumber String?
   priceId         String?
   finalPrice      Float?
-  
+
   vehicleType     String?
   deliveryAddress String?
   pickUpAddress   String?

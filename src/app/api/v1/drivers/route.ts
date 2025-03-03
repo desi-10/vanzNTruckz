@@ -19,6 +19,7 @@ export const GET = async (req: Request) => {
     const drivers = await prisma.driver.findMany({
       take: limit,
       skip,
+      include: { user: true },
       orderBy: { createdAt: "desc" },
     });
 
