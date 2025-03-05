@@ -163,7 +163,7 @@ export function DataTable<TData, TValue>({
               variant={"outline"}
               onClick={handleExcel}
               disabled={isLoading}
-              className="border border-orange-500 text-orange-500 hover:bg-orange-500/90 hover:text-white"
+              className="border border-primaryColor text-primaryColor hover:bg-primaryColor/90 hover:text-white"
             >
               {isLoading ? <Loader color="#f77f1e" /> : "Batch Update"}
             </Button>
@@ -189,7 +189,7 @@ export function DataTable<TData, TValue>({
                 </TableRow>
               ))}
             </TableHeader>
-            <TableBody className="text-xs text-center">
+            <TableBody className="text-xs">
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                   <TableRow

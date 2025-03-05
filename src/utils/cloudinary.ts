@@ -24,6 +24,8 @@ export async function uploadFile(path: string, file: File | null) {
     use_filename: true,
   });
 
+  console.log("Uploaded file:", uploadedFile);
+
   return {
     url: uploadedFile.secure_url,
     id: uploadedFile.public_id,

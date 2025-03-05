@@ -55,7 +55,7 @@ export const columns: ColumnDef<CustomerType>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
+      <div className="">
         <div className="h-10 w-10">
           {row.original.image ? (
             <Image

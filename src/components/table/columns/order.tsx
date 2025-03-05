@@ -64,7 +64,7 @@ export const columns: ColumnDef<OrderTable>[] = [
         className="truncate w-44 hover:underline"
         href={`/dashboard/orders/${row.original?.id}`}
       >
-        <div className="truncate w-44 text-primaryColor">{row.original.id}</div>
+        <div className="truncate w-44">{row.original.id}</div>
       </Link>
     ),
   },
@@ -119,8 +119,8 @@ export const columns: ColumnDef<OrderTable>[] = [
           row.original.transaction?.status === "PAID"
             ? "border-green-500"
             : row.original.transaction?.status === "PENDING"
-            ? "border-red-500 text-red-500"
-            : "border-gray-500"
+            ? "border-gray-500 text-gray-500"
+            : "border-red-500 text-red-500"
         }`}
       >
         {row.original.transaction?.status}
@@ -140,7 +140,17 @@ export const columns: ColumnDef<OrderTable>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <Badge className="text-white">{row.original.dispatch?.status}</Badge>
+      <Badge
+        className={`bg-white text-black rounded-full border hover:bg-transparent ${
+          row.original.dispatch?.status === "ASSIGNED"
+            ? "border-green-500 text-green-500"
+            : row.original.transaction?.status === "PENDING"
+            ? "border-gray-500 text-gray-500"
+            : "border-red-500 text-red-500"
+        }`}
+      >
+        {row.original.dispatch?.status}
+      </Badge>
     ),
   },
   {

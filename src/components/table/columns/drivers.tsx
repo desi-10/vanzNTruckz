@@ -56,15 +56,15 @@ export const columns: ColumnDef<DriverType>[] = [
       </Button>
     ),
     cell: ({ row }) => (
-      <div className="flex items-center justify-center">
-        <div className="h-10 w-10">
+      <div className="">
+        <div className="h-10 w-10 overflow-hidden rounded-full flex justify-center items-center">
           {row.original.carPicture ? (
             <Image
               src={row.original.carPicture.url ?? ""}
               alt="Car Picture"
               width={100}
               height={100}
-              className="rounded-full "
+              className="w-full h-full"
             />
           ) : (
             <div className="w-10 h-10 rounded-full bg-gray-200  flex justify-center items-center">

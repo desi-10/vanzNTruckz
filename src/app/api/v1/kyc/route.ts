@@ -100,6 +100,17 @@ export const PATCH = async (request: Request) => {
       await deleteFile((user.image as { id: string }).id);
     }
 
+    const findPhoneNumber = await prisma.user.findUnique({
+      where: { email: phoneNumber },
+    });
+
+    if (findPhoneNumber && findPhoneNumber.id !== user.id) {
+      return NextResponse.json(
+        { error: "Phone number already in use" },
+        { status: 409 }
+      );
+    }
+
     const [existingLicense, existingNumberPlate] = await Promise.all([
       prisma.driver.findUnique({ where: { license } }),
       prisma.driver.findUnique({ where: { numberPlate } }),
