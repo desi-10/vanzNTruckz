@@ -5,13 +5,8 @@ const kycDocs = {
       description:
         "Allows authenticated drivers to update their KYC (Know Your Customer) information, including profile picture, car picture, license, number plate, and other required documents.",
       tags: ["KYC"],
-      security: [
-        {
-          BearerAuth: [],
-        },
-      ],
+      security: [{ BearerAuth: [] }],
       requestBody: {
-        required: true,
         content: {
           "multipart/form-data": {
             schema: {
@@ -25,21 +20,21 @@ const kycDocs = {
                 carPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the car",
+                  description: "Car picture of the driver's vehicle",
                 },
                 phoneNumber: {
                   type: "string",
-                  example: "+233123456789",
-                  description: "Driver's phone number",
+                  example: "0541234567",
+                  description: "Driver's phone number (10 digits)",
                 },
                 vehicleType: {
                   type: "string",
-                  example: "SUV",
-                  description: "Type of vehicle",
+                  example: "Sedan",
+                  description: "Type of vehicle the driver uses",
                 },
                 numberPlate: {
                   type: "string",
-                  example: "GR-1234-23",
+                  example: "GT-1234-23",
                   description: "Vehicle number plate",
                 },
                 numberPlatePicture: {
@@ -49,7 +44,7 @@ const kycDocs = {
                 },
                 license: {
                   type: "string",
-                  example: "DL123456789",
+                  example: "DL1234567",
                   description: "Driver's license number",
                 },
                 licensePicture: {
@@ -60,8 +55,8 @@ const kycDocs = {
                 licenseExpiry: {
                   type: "string",
                   format: "date",
-                  example: "2025-12-31",
-                  description: "Expiry date of the driver's license",
+                  example: "2025-08-10",
+                  description: "Driver's license expiry date",
                 },
                 roadworthySticker: {
                   type: "string",
@@ -71,8 +66,8 @@ const kycDocs = {
                 roadworthyExpiry: {
                   type: "string",
                   format: "date",
-                  example: "2025-06-30",
-                  description: "Expiry date of the roadworthy sticker",
+                  example: "2025-12-15",
+                  description: "Roadworthy sticker expiry date",
                 },
                 insuranceSticker: {
                   type: "string",
@@ -81,18 +76,34 @@ const kycDocs = {
                 },
                 insurance: {
                   type: "string",
-                  example: "Insurance Company Name",
-                  description: "Name of the insurance company",
+                  example: "INS-123456",
+                  description: "Insurance policy number",
                 },
                 ghanaCard: {
                   type: "string",
-                  example: "GHA123456789",
-                  description: "Ghana Card number (optional)",
+                  example: "GHA-1234567890",
+                  description: "Driver's Ghana Card number",
                 },
                 ghanaCardPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the Ghana Card (optional)",
+                  description: "Picture of the Ghana Card",
+                },
+                stickerNumber: {
+                  type: "string",
+                  example: "SN123456",
+                  description: "Sticker number",
+                },
+                stickerPicture: {
+                  type: "string",
+                  format: "binary",
+                  description: "Picture of the sticker",
+                },
+                stickerExpiry: {
+                  type: "string",
+                  format: "date",
+                  example: "2025-11-20",
+                  description: "Sticker expiry date",
                 },
               },
             },
@@ -111,6 +122,30 @@ const kycDocs = {
                     type: "string",
                     example: "Driver updated successfully",
                   },
+                  data: {
+                    type: "object",
+                    description: "Updated driver information",
+                  },
+                },
+              },
+            },
+          },
+        },
+        400: {
+          description: "Invalid data",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  error: {
+                    type: "string",
+                    example: "Invalid data",
+                  },
+                  errors: {
+                    type: "object",
+                    description: "Validation errors",
+                  },
                 },
               },
             },
@@ -118,12 +153,51 @@ const kycDocs = {
         },
         401: {
           description: "Unauthorized",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  error: {
+                    type: "string",
+                    example: "Unauthorized",
+                  },
+                },
+              },
+            },
+          },
         },
         409: {
-          description: "Conflict - License or Number Plate already in use",
+          description: "Conflict",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  error: {
+                    type: "string",
+                    example: "Phone number already in use",
+                  },
+                },
+              },
+            },
+          },
         },
         500: {
           description: "Internal Server Error",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: {
+                    type: "string",
+                    example: "Internal Server Error",
+                  },
+                },
+              },
+            },
+          },
         },
       },
     },

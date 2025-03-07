@@ -1,47 +1,34 @@
 import { prisma } from "@/lib/db";
 import { deleteFile, uploadFile } from "@/utils/cloudinary";
-import { getUserById } from "@/data/user";
 import { validateJWT } from "@/utils/jwt";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const kycSchema = z.object({
-  profilePicture: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid profile picture",
-  }),
-  carPicture: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid car picture",
-  }),
-  phoneNumber: z
-    .string()
-    .min(10, "Invalid phone number")
-    .max(10, "Invalid phone number"),
-  vehicleType: z.string(),
-  numberPlate: z.string(),
-  numberPlatePicture: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid number plate picture",
-  }),
-  license: z.string(),
-  licensePicture: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid license picture",
-  }),
-  licenseExpiry: z.string(),
-  roadworthySticker: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid roadworthy sticker picture",
-  }),
-  roadworthyExpiry: z.string(),
-  insuranceSticker: z.custom<File>((file) => file instanceof File, {
-    message: "Invalid insurance sticker picture",
-  }),
-  insurance: z.string(),
+  profilePicture: z.instanceof(File).optional(),
+  carPicture: z.instanceof(File).optional(),
+  phoneNumber: z.string().length(10, "Invalid phone number").optional(),
+  vehicleType: z.string().optional(),
+  numberPlate: z.string().optional(),
+  numberPlatePicture: z.instanceof(File).optional(),
+  license: z.string().optional(),
+  licensePicture: z.instanceof(File).optional(),
+  licenseExpiry: z.string().optional(),
+  roadworthySticker: z.instanceof(File).optional(),
+  roadworthyExpiry: z.string().optional(),
+  insuranceSticker: z.instanceof(File).optional(),
+  insurance: z.string().optional(),
   ghanaCard: z.string().optional(),
-  ghanaCardPicture: z.custom<File>((file) => file instanceof File).optional(),
+  ghanaCardPicture: z.instanceof(File).optional(),
 });
 
 export const PATCH = async (request: Request) => {
   try {
     const id = validateJWT(request);
-    const user = await getUserById(id);
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { driverProfile: true },
+    });
 
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -69,52 +56,55 @@ export const PATCH = async (request: Request) => {
 
     if (!validate.success) {
       return NextResponse.json(
-        {
-          error: "Invalid data",
-          errors: validate.error.format(),
-        },
+        { error: "Invalid data", errors: validate.error.format() },
         { status: 400 }
       );
     }
 
-    const {
-      profilePicture,
-      carPicture,
-      phoneNumber,
-      vehicleType,
-      numberPlate,
-      numberPlatePicture,
-      license,
-      licensePicture,
-      licenseExpiry,
-      roadworthySticker,
-      roadworthyExpiry,
-      insuranceSticker,
-      insurance,
-      ghanaCard,
-      ghanaCardPicture,
-    } = validate.data;
+    const filteredData = Object.fromEntries(
+      Object.entries(validate.data).filter(
+        ([, value]) => value !== null && value !== "" && value !== undefined
+      )
+    );
 
-    // Delete old profile picture if exists
-    if (user.image && typeof user.image === "object" && "id" in user.image) {
-      await deleteFile((user.image as { id: string }).id);
-    }
+    const deleteExistingFile = async (obj: { id: string }) => {
+      if (obj && typeof obj === "object" && "id" in obj) {
+        await deleteFile(obj.id);
+      }
+    };
 
-    const findPhoneNumber = await prisma.user.findUnique({
-      where: { email: phoneNumber },
-    });
+    const filesToDelete = [
+      user.image,
+      user.driverProfile?.profilePicture,
+      user.driverProfile?.carPicture,
+      user.driverProfile?.numberPlatePicture,
+      user.driverProfile?.licensePicture,
+      user.driverProfile?.roadworthySticker,
+      user.driverProfile?.insuranceSticker,
+      user.driverProfile?.ghanaCardPicture,
+    ].filter((file): file is { id: string } => file !== undefined);
 
-    if (findPhoneNumber && findPhoneNumber.id !== user.id) {
+    await Promise.all(filesToDelete.map(deleteExistingFile));
+
+    const [existingPhoneNumber, existingLicense, existingNumberPlate] =
+      await Promise.all([
+        prisma.user.findUnique({
+          where: { phone: (filteredData.phoneNumber as string) || "" },
+        }),
+        prisma.driver.findUnique({
+          where: { license: (filteredData.license as string) || "" },
+        }),
+        prisma.driver.findUnique({
+          where: { numberPlate: (filteredData.numberPlate as string) || "" },
+        }),
+      ]);
+
+    if (existingPhoneNumber && existingPhoneNumber.id !== user.id) {
       return NextResponse.json(
         { error: "Phone number already in use" },
         { status: 409 }
       );
     }
-
-    const [existingLicense, existingNumberPlate] = await Promise.all([
-      prisma.driver.findUnique({ where: { license } }),
-      prisma.driver.findUnique({ where: { numberPlate } }),
-    ]);
 
     if (existingLicense && existingLicense.userId !== user.id) {
       return NextResponse.json(
@@ -130,80 +120,78 @@ export const PATCH = async (request: Request) => {
       );
     }
 
-    const uploadFileToCloudinary = async (
-      folder: string,
-      file: File | null
-    ) => {
-      if (!file) return null;
-      const result = await uploadFile(folder, file);
-      if (!result) throw new Error(`Failed to upload ${folder} picture`);
-      return result;
-    };
+    const uploadFileToCloudinary = async (folder: string, file?: File) =>
+      file ? uploadFile(folder, file) : null;
 
-    const uploadResults = await Promise.all([
-      uploadFileToCloudinary("profile", profilePicture),
-      uploadFileToCloudinary("cars", carPicture),
-      uploadFileToCloudinary("number_plate", numberPlatePicture),
-      uploadFileToCloudinary("license", licensePicture),
-      uploadFileToCloudinary("roadworthy", roadworthySticker),
-      uploadFileToCloudinary("insurance", insuranceSticker),
-      ghanaCardPicture &&
-        uploadFileToCloudinary("ghana_card", ghanaCardPicture),
-    ]);
+    const uploadFolders = [
+      "profile",
+      "car",
+      "number_plate",
+      "license",
+      "roadworthy",
+      "insurance",
+      "ghana_card",
+    ];
 
-    const [
-      profilePictureResult,
-      carPictureResult,
-      numberPlatePictureResult,
-      licensePictureResult,
-      roadworthyStickerResult,
-      insuranceStickerResult,
-      ghanaCardPictureResult,
-    ] = uploadResults;
+    const uploadKeys = [
+      "profilePicture",
+      "carPicture",
+      "numberPlatePicture",
+      "licensePicture",
+      "roadworthySticker",
+      "insuranceSticker",
+      "ghanaCardPicture",
+    ];
+
+    const uploadResults = await Promise.all(
+      uploadKeys.map((key, index) =>
+        uploadFileToCloudinary(uploadFolders[index], filteredData[key] as File)
+      )
+    );
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          phone: phoneNumber,
-          image: profilePictureResult || {},
+          phone: (filteredData.phoneNumber as string) || "",
+          image: uploadResults[0] || {},
         },
       });
 
       return await tx.driver.upsert({
         where: { userId: user.id },
         update: {
-          vehicleType,
-          numberPlate,
-          license,
-          licenseExpiry: new Date(licenseExpiry),
-          roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker: insuranceStickerResult || {},
-          ghanaCard,
-          insurance,
-          profilePicture: profilePictureResult || {},
-          carPicture: carPictureResult || {},
-          numberPlatePicture: numberPlatePictureResult || {},
-          licensePicture: licensePictureResult || {},
-          roadworthySticker: roadworthyStickerResult || {},
-          ghanaCardPicture: ghanaCardPictureResult || {},
+          ...filteredData,
+          licenseExpiry: filteredData.licenseExpiry
+            ? new Date(filteredData.licenseExpiry as string)
+            : undefined,
+          roadworthyExpiry: filteredData.roadworthyExpiry
+            ? new Date(filteredData.roadworthyExpiry as string)
+            : undefined,
+          profilePicture: uploadResults[0] || {},
+          carPicture: uploadResults[1] || {},
+          numberPlatePicture: uploadResults[2] || {},
+          licensePicture: uploadResults[3] || {},
+          roadworthySticker: uploadResults[4] || {},
+          insuranceSticker: uploadResults[5] || {},
+          ghanaCardPicture: uploadResults[6] || {},
         },
         create: {
           user: { connect: { id: user.id } },
-          vehicleType,
-          numberPlate,
-          license,
-          licenseExpiry: new Date(licenseExpiry),
-          roadworthyExpiry: new Date(roadworthyExpiry),
-          insuranceSticker: insuranceStickerResult || {},
-          ghanaCard,
-          insurance,
-          profilePicture: profilePictureResult || {},
-          carPicture: carPictureResult || {},
-          numberPlatePicture: numberPlatePictureResult || {},
-          licensePicture: licensePictureResult || {},
-          roadworthySticker: roadworthyStickerResult || {},
-          ghanaCardPicture: ghanaCardPictureResult || {},
+          ...filteredData,
+          licenseExpiry: filteredData.licenseExpiry
+            ? new Date(filteredData.licenseExpiry as string)
+            : undefined,
+          roadworthyExpiry: filteredData.roadworthyExpiry
+            ? new Date(filteredData.roadworthyExpiry as string)
+            : undefined,
+          profilePicture: uploadResults[0] || {},
+          carPicture: uploadResults[1] || {},
+          numberPlatePicture: uploadResults[2] || {},
+          licensePicture: uploadResults[3] || {},
+          roadworthySticker: uploadResults[4] || {},
+          insuranceSticker: uploadResults[5] || {},
+          ghanaCardPicture: uploadResults[6] || {},
         },
       });
     });
@@ -215,7 +203,7 @@ export const PATCH = async (request: Request) => {
   } catch (error) {
     console.error("Error updating KYC:", error);
     return NextResponse.json(
-      { message: "Internal Server Error" },
+      { error: "Something went wrong" },
       { status: 500 }
     );
   }
