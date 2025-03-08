@@ -7,6 +7,7 @@ const kycDocs = {
       tags: ["KYC"],
       security: [{ BearerAuth: [] }],
       requestBody: {
+        required: true,
         content: {
           "multipart/form-data": {
             schema: {
@@ -15,95 +16,79 @@ const kycDocs = {
                 profilePicture: {
                   type: "string",
                   format: "binary",
-                  description: "Profile picture of the driver",
+                  nullable: true,
                 },
                 carPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Car picture of the driver's vehicle",
+                  nullable: true,
                 },
                 phoneNumber: {
                   type: "string",
-                  example: "0541234567",
-                  description: "Driver's phone number (10 digits)",
+                  example: "0551234567",
+                  nullable: true,
                 },
                 vehicleType: {
                   type: "string",
                   example: "Sedan",
-                  description: "Type of vehicle the driver uses",
+                  nullable: true,
                 },
                 numberPlate: {
                   type: "string",
-                  example: "GT-1234-23",
-                  description: "Vehicle number plate",
+                  example: "GR-1234-22",
+                  nullable: true,
                 },
                 numberPlatePicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the number plate",
+                  nullable: true,
                 },
                 license: {
                   type: "string",
-                  example: "DL1234567",
-                  description: "Driver's license number",
+                  example: "D12345678",
+                  nullable: true,
                 },
                 licensePicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the driver's license",
+                  nullable: true,
                 },
                 licenseExpiry: {
                   type: "string",
                   format: "date",
-                  example: "2025-08-10",
-                  description: "Driver's license expiry date",
+                  example: "2025-06-30",
+                  nullable: true,
                 },
                 roadworthySticker: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the roadworthy sticker",
+                  nullable: true,
                 },
                 roadworthyExpiry: {
                   type: "string",
                   format: "date",
-                  example: "2025-12-15",
-                  description: "Roadworthy sticker expiry date",
+                  example: "2025-12-31",
+                  nullable: true,
                 },
                 insuranceSticker: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the insurance sticker",
+                  nullable: true,
                 },
                 insurance: {
                   type: "string",
-                  example: "INS-123456",
-                  description: "Insurance policy number",
+                  example: "Allianz",
+                  nullable: true,
                 },
                 ghanaCard: {
                   type: "string",
                   example: "GHA-1234567890",
-                  description: "Driver's Ghana Card number",
+                  nullable: true,
                 },
                 ghanaCardPicture: {
                   type: "string",
                   format: "binary",
-                  description: "Picture of the Ghana Card",
-                },
-                stickerNumber: {
-                  type: "string",
-                  example: "SN123456",
-                  description: "Sticker number",
-                },
-                stickerPicture: {
-                  type: "string",
-                  format: "binary",
-                  description: "Picture of the sticker",
-                },
-                stickerExpiry: {
-                  type: "string",
-                  format: "date",
-                  example: "2025-11-20",
-                  description: "Sticker expiry date",
+                  nullable: true,
                 },
               },
             },
@@ -124,7 +109,82 @@ const kycDocs = {
                   },
                   data: {
                     type: "object",
-                    description: "Updated driver information",
+                    properties: {
+                      userId: { type: "string", example: "abc123" },
+                      updatedFields: {
+                        type: "array",
+                        items: { type: "string" },
+                        example: ["phoneNumber", "license", "profilePicture"],
+                      },
+                      profilePictureUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/profile.jpg",
+                      },
+                      carPictureUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/car.jpg",
+                      },
+                      licensePictureUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/license.jpg",
+                      },
+                      numberPlatePictureUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/number_plate.jpg",
+                      },
+                      ghanaCardPictureUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/ghana_card.jpg",
+                      },
+                      roadworthyStickerUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/roadworthy.jpg",
+                      },
+                      insuranceStickerUrl: {
+                        type: "string",
+                        format: "uri",
+                        example: "https://example.com/uploads/insurance.jpg",
+                      },
+                      properties: {
+                        phoneNumber: {
+                          type: "string",
+                          example: "0551234567",
+                        },
+                        vehicleType: { type: "string", example: "Sedan" },
+                        numberPlate: {
+                          type: "string",
+                          example: "GR-1234-22",
+                        },
+                        license: { type: "string", example: "D12345678" },
+                        licenseExpiry: {
+                          type: "string",
+                          format: "date",
+                          example: "2025-06-30",
+                        },
+                        roadworthyExpiry: {
+                          type: "string",
+                          format: "date",
+                          example: "2025-12-31",
+                        },
+                        insurance: { type: "string", example: "Allianz" },
+                        ghanaCard: {
+                          type: "string",
+                          example: "GHA-1234567890",
+                        },
+                      },
+
+                      updatedAt: {
+                        type: "string",
+                        format: "date-time",
+                        example: "2025-03-08T12:00:00Z",
+                      },
+                    },
                   },
                 },
               },
@@ -138,14 +198,8 @@ const kycDocs = {
               schema: {
                 type: "object",
                 properties: {
-                  error: {
-                    type: "string",
-                    example: "Invalid data",
-                  },
-                  errors: {
-                    type: "object",
-                    description: "Validation errors",
-                  },
+                  error: { type: "string", example: "Invalid data" },
+                  errors: { type: "object" },
                 },
               },
             },
@@ -158,17 +212,14 @@ const kycDocs = {
               schema: {
                 type: "object",
                 properties: {
-                  error: {
-                    type: "string",
-                    example: "Unauthorized",
-                  },
+                  error: { type: "string", example: "Unauthorized" },
                 },
               },
             },
           },
         },
         409: {
-          description: "Conflict",
+          description: "Conflict - Duplicate data",
           content: {
             "application/json": {
               schema: {
@@ -184,16 +235,13 @@ const kycDocs = {
           },
         },
         500: {
-          description: "Internal Server Error",
+          description: "Internal server error",
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 properties: {
-                  message: {
-                    type: "string",
-                    example: "Internal Server Error",
-                  },
+                  error: { type: "string", example: "Something went wrong" },
                 },
               },
             },
