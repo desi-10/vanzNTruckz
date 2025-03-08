@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/db";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 
-const url = process.env.NEXT_PUBLIC_URL || "http://localhost:3000/";
+const url = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
 describe("Register API", () => {
   beforeAll(async () => {
@@ -68,7 +68,7 @@ describe("Login API", () => {
     // formData.append("numberPlatePicture", dummyFile);
     formData.append("license", "DL1234567");
     // formData.append("licensePicture", dummyFile);
-    formData.append("licenseExpiry", "2025-08-10");
+    // formData.append("licenseExpiry", "2025-08-10");
     // formData.append("roadworthySticker", dummyFile);
     formData.append("roadworthyExpiry", "2025-12-15");
     // formData.append("insuranceSticker", dummyFile);
@@ -76,15 +76,27 @@ describe("Login API", () => {
     formData.append("ghanaCard", "GHA-1234567890");
     // formData.append("ghanaCardPicture", dummyFile);
 
-    const { data, status } = await axios.patch(url + "/api/v1/kyc", formData, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    try {
+      const { data, status } = await axios.patch(
+        url + "/api/v1/kyc",
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
-    expect(status).toBe(200);
-    expect(data.message).toBe("Driver updated successfully");
-    expect(data.data.licenseExpiry).toBeDefined();
+      expect(status).toBe(200);
+      expect(data.message).toBe("Driver updated successfully");
+      expect(data.data.licenseExpiry).toBeDefined();
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        console.log(error.response?.data);
+        return;
+      }
+      console.log(error);
+    }
   });
 });

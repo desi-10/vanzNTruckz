@@ -170,8 +170,6 @@ export const PATCH = async (request: Request) => {
       )
     );
 
-    console.log(uploadResults);
-
     const result = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
