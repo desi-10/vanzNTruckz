@@ -35,13 +35,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Build Next.js app
-        run: npm run build
-      
       - name: Start Next.js server (for E2E testing)
         run: npm run start
-        
+
       - name: Run tests
         run: npm test
-
-
