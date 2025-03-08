@@ -5,21 +5,25 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const kycSchema = z.object({
-  profilePicture: z.instanceof(File).optional(),
-  carPicture: z.instanceof(File).optional(),
-  phoneNumber: z.string().length(10, "Invalid phone number").optional(),
-  vehicleType: z.string().optional(),
-  numberPlate: z.string().optional(),
-  numberPlatePicture: z.instanceof(File).optional(),
-  license: z.string().optional(),
-  licensePicture: z.instanceof(File).optional(),
-  licenseExpiry: z.string().optional(),
-  roadworthySticker: z.instanceof(File).optional(),
-  roadworthyExpiry: z.string().optional(),
-  insuranceSticker: z.instanceof(File).optional(),
-  insurance: z.string().optional(),
-  ghanaCard: z.string().optional(),
-  ghanaCardPicture: z.instanceof(File).optional(),
+  profilePicture: z.instanceof(File).optional().nullable(),
+  carPicture: z.instanceof(File).optional().nullable(),
+  phoneNumber: z
+    .string()
+    .length(10, "Invalid phone number")
+    .optional()
+    .nullable(),
+  vehicleType: z.string().optional().nullable(),
+  numberPlate: z.string().optional().nullable(),
+  numberPlatePicture: z.instanceof(File).optional().nullable(),
+  license: z.string().optional().nullable(),
+  licensePicture: z.instanceof(File).optional().nullable(),
+  licenseExpiry: z.string().optional().nullable(),
+  roadworthySticker: z.instanceof(File).optional().nullable(),
+  roadworthyExpiry: z.string().optional().nullable(),
+  insuranceSticker: z.instanceof(File).optional().nullable(),
+  insurance: z.string().optional().nullable(),
+  ghanaCard: z.string().optional().nullable(),
+  ghanaCardPicture: z.instanceof(File).optional().nullable(),
 });
 
 export const PATCH = async (request: Request) => {
@@ -29,6 +33,9 @@ export const PATCH = async (request: Request) => {
       where: { id },
       include: { driverProfile: true },
     });
+
+    console.log(id, "id");
+    // console.log(user, "user");
 
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -55,6 +62,7 @@ export const PATCH = async (request: Request) => {
     });
 
     if (!validate.success) {
+      console.log(validate.error.format());
       return NextResponse.json(
         { error: "Invalid data", errors: validate.error.format() },
         { status: 400 }
@@ -124,6 +132,7 @@ export const PATCH = async (request: Request) => {
 
     const uploadFileToCloudinary = async (folder: string, file?: File) =>
       file ? uploadFile(folder, file) : null;
+    // file ? { id: "123", url: "http://localhost:300/profile/test.jpg" } : null;
 
     const uploadFolders = [
       "profile",
@@ -151,11 +160,13 @@ export const PATCH = async (request: Request) => {
       )
     );
 
+    console.log(uploadResults);
+
     const result = await prisma.$transaction(async (tx) => {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          phone: (filteredData.phoneNumber as string) || "",
+          phone: (validate.data.phoneNumber as string) || user.phone || "",
           image: uploadResults[0] || {},
         },
       });
@@ -163,37 +174,57 @@ export const PATCH = async (request: Request) => {
       return await tx.driver.upsert({
         where: { userId: user.id },
         update: {
-          ...filteredData,
-          licenseExpiry: filteredData.licenseExpiry
-            ? new Date(filteredData.licenseExpiry as string)
-            : undefined,
-          roadworthyExpiry: filteredData.roadworthyExpiry
-            ? new Date(filteredData.roadworthyExpiry as string)
-            : undefined,
-          profilePicture: uploadResults[0] || {},
-          carPicture: uploadResults[1] || {},
-          numberPlatePicture: uploadResults[2] || {},
-          licensePicture: uploadResults[3] || {},
-          roadworthySticker: uploadResults[4] || {},
-          insuranceSticker: uploadResults[5] || {},
-          ghanaCardPicture: uploadResults[6] || {},
+          numberPlate:
+            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
+          license: validate.data.license || user.driverProfile?.license || "",
+          vehicleType:
+            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+          licenseExpiry: validate.data.licenseExpiry
+            ? new Date(validate.data.licenseExpiry)
+            : user.driverProfile?.licenseExpiry,
+          roadworthyExpiry: validate.data.roadworthyExpiry
+            ? new Date(validate.data.roadworthyExpiry)
+            : user.driverProfile?.roadworthyExpiry,
+          profilePicture:
+            uploadResults[0] || user.driverProfile?.profilePicture || {},
+          carPicture: uploadResults[1] || user.driverProfile?.carPicture || {},
+          numberPlatePicture:
+            uploadResults[2] || user.driverProfile?.numberPlatePicture || {},
+          licensePicture:
+            uploadResults[3] || user.driverProfile?.licensePicture || {},
+          roadworthySticker:
+            uploadResults[4] || user.driverProfile?.roadworthySticker || {},
+          insuranceSticker:
+            uploadResults[5] || user.driverProfile?.insuranceSticker || {},
+          ghanaCardPicture:
+            uploadResults[6] || user.driverProfile?.ghanaCardPicture || {},
         },
         create: {
           user: { connect: { id: user.id } },
-          ...filteredData,
-          licenseExpiry: filteredData.licenseExpiry
-            ? new Date(filteredData.licenseExpiry as string)
-            : undefined,
-          roadworthyExpiry: filteredData.roadworthyExpiry
-            ? new Date(filteredData.roadworthyExpiry as string)
-            : undefined,
-          profilePicture: uploadResults[0] || {},
-          carPicture: uploadResults[1] || {},
-          numberPlatePicture: uploadResults[2] || {},
-          licensePicture: uploadResults[3] || {},
-          roadworthySticker: uploadResults[4] || {},
-          insuranceSticker: uploadResults[5] || {},
-          ghanaCardPicture: uploadResults[6] || {},
+          numberPlate:
+            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
+          license: validate.data.license || user.driverProfile?.license || "",
+          vehicleType:
+            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+          licenseExpiry: validate.data.licenseExpiry
+            ? new Date(validate.data.licenseExpiry)
+            : user.driverProfile?.licenseExpiry,
+          roadworthyExpiry: validate.data.roadworthyExpiry
+            ? new Date(validate.data.roadworthyExpiry as string)
+            : user.driverProfile?.roadworthyExpiry,
+          profilePicture:
+            uploadResults[0] || user.driverProfile?.profilePicture || {},
+          carPicture: uploadResults[1] || user.driverProfile?.carPicture || {},
+          numberPlatePicture:
+            uploadResults[2] || user.driverProfile?.numberPlatePicture || {},
+          licensePicture:
+            uploadResults[3] || user.driverProfile?.licensePicture || {},
+          roadworthySticker:
+            uploadResults[4] || user.driverProfile?.roadworthySticker || {},
+          insuranceSticker:
+            uploadResults[5] || user.driverProfile?.insuranceSticker || {},
+          ghanaCardPicture:
+            uploadResults[6] || user.driverProfile?.ghanaCardPicture || {},
         },
       });
     });
