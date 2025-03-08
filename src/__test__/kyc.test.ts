@@ -66,7 +66,7 @@ describe("Login API", () => {
     formData.append("licensePicture", new File([""], "test.jpg"));
     formData.append("licenseExpiry", "2025-08-10");
     formData.append("roadworthySticker", new File([""], "test.jpg"));
-    // formData.append("roadworthyExpiry", "2025-12-15");
+    formData.append("roadworthyExpiry", "2025-12-15");
     formData.append("insuranceSticker", new File([""], "test.jpg"));
     formData.append("insurance", "INS-123456");
     formData.append("ghanaCard", "GHA-1234567890");
