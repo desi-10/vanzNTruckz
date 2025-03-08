@@ -36,7 +36,7 @@ jobs:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Start Next.js server (for E2E testing)
-        run: npm run start
+        run: npm run dev
 
       - name: Run tests
         run: npm test
