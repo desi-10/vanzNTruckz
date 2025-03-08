@@ -29,6 +29,11 @@ const kycSchema = z.object({
 export const PATCH = async (request: Request) => {
   try {
     const id = validateJWT(request);
+
+    if (!id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const user = await prisma.user.findUnique({
       where: { id },
       include: { driverProfile: true },
