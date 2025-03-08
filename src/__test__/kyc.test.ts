@@ -56,21 +56,25 @@ describe("Login API", () => {
 
   it("should update KYC", async () => {
     const formData = new FormData();
-    formData.append("profilePicture", new File([""], "test.jpg"));
-    formData.append("carPicture", new File([""], "test.jpg"));
+    const dummyFile = new File([""], "test.jpg", {
+      type: "image/jpeg",
+    });
+
+    formData.append("profilePicture", dummyFile);
+    formData.append("carPicture", dummyFile);
     formData.append("phoneNumber", "0541234567");
     formData.append("vehicleType", "Sedan");
     formData.append("numberPlate", "GT-1234-23");
-    formData.append("numberPlatePicture", new File([""], "test.jpg"));
+    formData.append("numberPlatePicture", dummyFile);
     formData.append("license", "DL1234567");
-    formData.append("licensePicture", new File([""], "test.jpg"));
+    formData.append("licensePicture", dummyFile);
     formData.append("licenseExpiry", "2025-08-10");
-    formData.append("roadworthySticker", new File([""], "test.jpg"));
+    formData.append("roadworthySticker", dummyFile);
     formData.append("roadworthyExpiry", "2025-12-15");
-    formData.append("insuranceSticker", new File([""], "test.jpg"));
+    formData.append("insuranceSticker", dummyFile);
     formData.append("insurance", "INS-123456");
     formData.append("ghanaCard", "GHA-1234567890");
-    formData.append("ghanaCardPicture", new File([""], "test.jpg"));
+    formData.append("ghanaCardPicture", dummyFile);
 
     const { data, status } = await axios.patch(url + "/api/v1/kyc", formData, {
       headers: {
