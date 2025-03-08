@@ -35,8 +35,12 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Start Next.js server (for E2E testing)
-        run: npm run start
+      - name: Start Next.js server
+        run: npm run dev &
+
+      - name: Wait for Next.js to be ready
+        run: |
+          timeout 60s bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
 
       - name: Run tests
         run: npm test
