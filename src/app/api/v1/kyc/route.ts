@@ -136,8 +136,13 @@ export const PATCH = async (request: Request) => {
     }
 
     const uploadFileToCloudinary = async (folder: string, file?: File) =>
-      file ? uploadFile(folder, file) : null;
-    // file ? { id: "123", url: "http://localhost:300/profile/test.jpg" } : null;
+      process.env.NODE_ENV === "production"
+        ? file
+          ? uploadFile(folder, file)
+          : null
+        : file
+        ? { id: "123", url: "http://localhost:300/profile/test.jpg" }
+        : null;
 
     const uploadFolders = [
       "profile",
