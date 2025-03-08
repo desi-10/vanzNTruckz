@@ -82,7 +82,9 @@ export const PATCH = async (request: Request) => {
       user.driverProfile?.roadworthySticker,
       user.driverProfile?.insuranceSticker,
       user.driverProfile?.ghanaCardPicture,
-    ].filter((file): file is { id: string } => file !== undefined);
+    ].filter(
+      (file): file is { id: string } => file !== undefined || file !== null
+    );
 
     await Promise.all(filesToDelete.map(deleteExistingFile));
 
