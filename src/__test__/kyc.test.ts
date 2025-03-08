@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 
 const url = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 
@@ -76,27 +76,15 @@ describe("Login API", () => {
     formData.append("ghanaCard", "GHA-1234567890");
     // formData.append("ghanaCardPicture", dummyFile);
 
-    try {
-      const { data, status } = await axios.patch(
-        url + "/api/v1/kyc",
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+    const { data, status } = await axios.patch(url + "/api/v1/kyc", formData, {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
-      expect(status).toBe(200);
-      expect(data.message).toBe("Driver updated successfully");
-      expect(data.data.licenseExpiry).toBeDefined();
-    } catch (error) {
-      if (error instanceof AxiosError) {
-        console.log(error.response?.data);
-        return;
-      }
-      console.log(error);
-    }
+    expect(status).toBe(200);
+    expect(data.message).toBe("Driver updated successfully");
+    expect(data.data.licenseExpiry).toBeDefined();
   });
 });
