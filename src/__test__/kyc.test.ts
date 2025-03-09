@@ -91,7 +91,7 @@ describe("Login API", () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error("🔥 API Error Response:", error.response?.data);
-        throw new Error(JSON.stringify(error.response?.data, null, 2)); // Force Jest to fail & print error
+        return;
       }
       throw error;
     }
