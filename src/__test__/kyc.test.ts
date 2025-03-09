@@ -6,11 +6,6 @@ const url = process.env.NEXT_PUBLIC_URL || "http://localhost:3000";
 describe("Register API", () => {
   beforeAll(async () => {
     await prisma.user.deleteMany(); // Reset DB
-    console.log("Database Reset");
-  });
-
-  afterAll(async () => {
-    await prisma.$disconnect();
   });
 
   let otp: string;
@@ -38,7 +33,7 @@ describe("Register API", () => {
   });
 });
 
-describe("Login API", () => {
+describe("KYC API", () => {
   let accessToken: string;
 
   it("should return a token", async () => {
@@ -95,5 +90,18 @@ describe("Login API", () => {
       }
       throw error;
     }
+  });
+
+  it("should return the status of the KYC", async () => {
+    const { data, status } = await axios.get(url + "/api/v1/kyc/status", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    expect(status).toBe(200);
+    expect(data.message).toBe("KYC status retrieved successfully");
+    expect(data.data.profilePicture).toBeDefined();
+    expect(data.data.carPicture).toBeDefined();
   });
 });
