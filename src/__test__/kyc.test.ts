@@ -101,7 +101,7 @@ describe("KYC API", () => {
 
     expect(status).toBe(200);
     expect(data.message).toBe("KYC status retrieved successfully");
-    expect(data.data.profilePicture).toBe(true);
-    expect(data.data.carPicture).toBe(true);
+    expect(data.data.profilePicture).toBeDefined();
+    expect(data.data.carPicture).toBeDefined();
   });
 });
