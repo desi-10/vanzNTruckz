@@ -90,10 +90,10 @@ describe("Login API", () => {
       expect(data.data.licenseExpiry).toBeDefined();
     } catch (error) {
       if (error instanceof AxiosError) {
-        console.log("API Error Response:", error.response?.data);
-        return;
+        console.error("🔥 API Error Response:", error.response?.data);
+        throw new Error(JSON.stringify(error.response?.data, null, 2)); // Force Jest to fail & print error
       }
-      throw error; // Ensures Jest fails the test when an error occurs
+      throw error;
     }
   });
 });
