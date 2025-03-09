@@ -96,4 +96,17 @@ describe("Login API", () => {
       throw error;
     }
   });
+
+  it("should return the status of the KYC", async () => {
+    const { data, status } = await axios.get(url + "/api/v1/kyc/status", {
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
+    });
+
+    expect(status).toBe(200);
+    expect(data.message).toBe("KYC status retrieved successfully");
+    expect(data.data.profilePicture).toBe(true);
+    expect(data.data.carPicture).toBe(true);
+  });
 });
