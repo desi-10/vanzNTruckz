@@ -21,6 +21,10 @@ export const GET = async (request: Request) => {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    if (user.role !== "DRIVER") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const status = {
       profilePicture:
         user.image && typeof user.image === "object" && "id" in user.image
