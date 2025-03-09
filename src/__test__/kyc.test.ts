@@ -56,25 +56,23 @@ describe("Login API", () => {
 
   it("should update KYC", async () => {
     const formData = new FormData();
-    // const dummyFile = new File([""], "test.jpg", {
-    //   type: "image/jpeg",
-    // });
+    const dummyFile = new Blob([""], { type: "image/jpeg" });
 
-    // formData.append("profilePicture", dummyFile);
-    // formData.append("carPicture", dummyFile);
+    formData.append("profilePicture", dummyFile);
+    formData.append("carPicture", dummyFile);
     formData.append("phoneNumber", "0541234567");
     formData.append("vehicleType", "Sedan");
     formData.append("numberPlate", "GT-1234-23");
-    // formData.append("numberPlatePicture", dummyFile);
+    formData.append("numberPlatePicture", dummyFile);
     formData.append("license", "DL1234567");
-    // formData.append("licensePicture", dummyFile);
-    // formData.append("licenseExpiry", "2025-08-10");
-    // formData.append("roadworthySticker", dummyFile);
+    formData.append("licensePicture", dummyFile);
+    formData.append("licenseExpiry", "2025-08-10");
+    formData.append("roadworthySticker", dummyFile);
     formData.append("roadworthyExpiry", "2025-12-15");
-    // formData.append("insuranceSticker", dummyFile);
+    formData.append("insuranceSticker", dummyFile);
     formData.append("insurance", "INS-123456");
     formData.append("ghanaCard", "GHA-1234567890");
-    // formData.append("ghanaCardPicture", dummyFile);
+    formData.append("ghanaCardPicture", dummyFile);
     try {
       const { data, status } = await axios.patch(
         url + "/api/v1/kyc",
@@ -93,8 +91,8 @@ describe("Login API", () => {
     } catch (error) {
       if (error instanceof AxiosError) {
         console.log("API Error Response:", error.response?.data);
+        return;
       }
-      console.log("Error:", error);
       throw error; // Ensures Jest fails the test when an error occurs
     }
   });

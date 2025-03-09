@@ -39,9 +39,6 @@ export const PATCH = async (request: Request) => {
       include: { driverProfile: true },
     });
 
-    console.log(id, "id");
-    // console.log(user, "user");
-
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
