@@ -10,71 +10,65 @@ export const GET = async (request: Request) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const driver = await prisma.driver.findUnique({
-      where: { userId: id },
+    const user = await prisma.user.findUnique({
+      where: { id },
       include: {
-        user: {
-          select: {
-            phone: true,
-            image: true,
-          },
-        },
+        driverProfile: true,
       },
     });
 
-    if (!driver) {
-      return NextResponse.json({ error: "Driver not found" }, { status: 404 });
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     const status = {
       profilePicture:
-        driver.user.image &&
-        typeof driver.user.image === "object" &&
-        "id" in driver.user.image
+        user.image && typeof user.image === "object" && "id" in user.image
           ? true
           : false,
       carPicture:
-        driver.carPicture &&
-        typeof driver.carPicture === "object" &&
-        "id" in driver.carPicture
+        user.driverProfile?.carPicture &&
+        typeof user.driverProfile?.carPicture === "object" &&
+        "id" in user.driverProfile?.carPicture
           ? true
           : false,
-      phoneNumber: driver.user.phone ? true : false,
-      vehicleType: driver.vehicleType ? true : false,
-      numberPlate: driver.numberPlate ? true : false,
+      phoneNumber: user.phone ? true : false,
+      vehicleType: user.driverProfile?.vehicleType ? true : false,
+      numberPlate: user.driverProfile?.numberPlate ? true : false,
       numberPlatePicture:
-        driver.numberPlatePicture &&
-        typeof driver.numberPlatePicture === "object" &&
-        "id" in driver.numberPlatePicture
+        user.driverProfile?.numberPlatePicture &&
+        typeof user.driverProfile?.numberPlatePicture === "object" &&
+        "id" in user.driverProfile?.numberPlatePicture
           ? true
           : false,
-      license: driver.license ? true : false,
+      license: user.driverProfile?.license ? true : false,
       licensePicture:
-        driver.licensePicture &&
-        typeof driver.licensePicture === "object" &&
-        "id" in driver.licensePicture
+        user.driverProfile?.licensePicture &&
+        typeof user.driverProfile?.licensePicture === "object" &&
+        "id" in user.driverProfile?.licensePicture
           ? true
           : false,
-      licenseExpiry: driver.licenseExpiry ? true : false,
+      licenseExpiry: user.driverProfile?.licenseExpiry ? true : false,
+
       roadworthySticker:
-        driver.roadworthySticker &&
-        typeof driver.roadworthySticker === "object" &&
-        "id" in driver.roadworthySticker
+        user.driverProfile?.roadworthySticker &&
+        typeof user.driverProfile?.roadworthySticker === "object" &&
+        "id" in user.driverProfile?.roadworthySticker
           ? true
           : false,
-      roadworthyExpiry: driver.roadworthyExpiry ? true : false,
+      roadworthyExpiry: user.driverProfile?.roadworthyExpiry ? true : false,
       insuranceSticker:
-        driver.insuranceSticker &&
-        typeof driver.insuranceSticker === "object" &&
-        "id" in driver.insuranceSticker
+        user.driverProfile?.insuranceSticker &&
+        typeof user.driverProfile?.insuranceSticker === "object" &&
+        "id" in user.driverProfile?.insuranceSticker
           ? true
           : false,
-      insurance: driver.insurance ? true : false,
-      ghanaCard: driver.ghanaCard ? true : false,
+      insurance: user.driverProfile?.insurance ? true : false,
+      ghanaCard: user.driverProfile?.ghanaCard ? true : false,
       ghanaCardPicture:
-        driver.ghanaCardPicture &&
-        typeof driver.ghanaCardPicture === "object" &&
-        "id" in driver.ghanaCardPicture
+        user.driverProfile?.ghanaCardPicture &&
+        typeof user.driverProfile?.ghanaCardPicture === "object" &&
+        "id" in user.driverProfile?.ghanaCardPicture
           ? true
           : false,
     };
