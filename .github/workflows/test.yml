@@ -35,12 +35,15 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
-      - name: Start Next.js server
-        run: npm run dev &
+      - name: Start Next.js server in dev mode
+        run: npm run dev & echo $! > next_pid
 
       - name: Wait for Next.js to be ready
         run: |
-          timeout 60s bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done'
+          timeout 60s bash -c 'until curl -s http://localhost:3000 > /dev/null; do sleep 2; done' || (echo "Next.js failed to start" && exit 1)
 
       - name: Run tests
         run: npm test
+
+      - name: Stop Next.js server
+        run: kill $(cat next_pid) || echo "Next.js server already stopped"

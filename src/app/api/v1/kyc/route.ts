@@ -39,9 +39,6 @@ export const PATCH = async (request: Request) => {
       include: { driverProfile: true },
     });
 
-    console.log(id, "id");
-    // console.log(user, "user");
-
     if (!user || user.role !== "DRIVER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -136,8 +133,13 @@ export const PATCH = async (request: Request) => {
     }
 
     const uploadFileToCloudinary = async (folder: string, file?: File) =>
-      file ? uploadFile(folder, file) : null;
-    // file ? { id: "123", url: "http://localhost:300/profile/test.jpg" } : null;
+      process.env.NODE_ENV === "production"
+        ? file
+          ? uploadFile(folder, file)
+          : null
+        : file
+        ? { id: "123", url: "http://localhost:300/profile/test.jpg" }
+        : null;
 
     const uploadFolders = [
       "profile",
@@ -164,8 +166,6 @@ export const PATCH = async (request: Request) => {
         uploadFileToCloudinary(uploadFolders[index], filteredData[key] as File)
       )
     );
-
-    console.log(uploadResults);
 
     const result = await prisma.$transaction(async (tx) => {
       await tx.user.update({
