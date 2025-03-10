@@ -192,34 +192,44 @@ model Dispatch {
 }
 
 model Order {
-  id              String       @id @default(cuid())
-  customerId      String
-  driverId        String?
-  receipientName  String?
-  recepientNumber String?
-  priceId         String?
-  finalPrice      Float?
+  id                String       @id @default(cuid())
+  customerId        String
+  driverId          String?
+  couponId          String?
+  
+  pickUp            String
+  dropOff           String
+  vehicleType       String
+  parcelType        String
+  pieces            Int
+  image             Json?
+  recepientName     String
+  recepientNumber   String
+  additionalInfo    String?
+  
+  BaseCharges       Decimal
+  distanceCharges   Decimal
+  timeCharges       Decimal
+  AdditionalCharges Decimal?
+  totalEstimatedFare Decimal
 
-  vehicleType     String?
-  deliveryAddress String?
-  pickUpAddress   String?
-  pickUpTime      String?
-  deliveryTime    String?
-  status          OrderStatus  @default(PENDING)
-  transaction     Transaction?
-  dispatch        Dispatch?
-  driverSnapshot  Json?
+  paymentMethod     Json?
+  coupon            Coupon?      @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  status            OrderStatus  @default(PENDING)
+  transaction       Transaction?
+  dispatch          Dispatch?
+  driverSnapshot    Json?
 
-  bids  Bid[]
-  inbox Inbox[]
+  bids             Bid[]
+  inbox            Inbox[]
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  customer User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  driver   Driver?  @relation(fields: [driverId], references: [userId], onDelete: SetNull)
-  price    Pricing? @relation(fields: [priceId], references: [id], onDelete: Restrict)
+  customer         User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  driver           Driver?  @relation(fields: [driverId], references: [userId], onDelete: SetNull)
 }
+
 
 model Transaction {
   id            String        @id @default(cuid())
@@ -258,7 +268,7 @@ model Pricing {
   perMinRate  Float
   isActive    Boolean @default(true)
 
-  orders Order[]
+
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -277,4 +287,18 @@ model Inbox {
 
   order Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
   user  User   @relation(fields: [userId], references: [id])
+}
+
+
+model Coupon {
+  id        String    @id @default(cuid())
+  code      String
+  amount    Decimal
+  discount  Decimal
+  isActive  Boolean   @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders Order[]
 }

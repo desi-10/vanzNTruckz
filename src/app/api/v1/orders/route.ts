@@ -3,22 +3,37 @@ import { z } from "zod";
 import { NextResponse } from "next/server";
 import { validateJWT } from "@/utils/jwt";
 import { auth } from "@/auth";
+import { uploadFile } from "@/utils/cloudinary";
 
 const OrderSchema = z.object({
-  receipientName: z.string({ required_error: "Recipient name is required" }),
-  recepientNumber: z.string({ required_error: "Recipient number is required" }),
+  pickUp: z.string().min(1, "Pick up address is required"),
+  dropOff: z.string().min(1, "Drop off address is required"),
+  vehicleType: z.string().min(1, "Vehicle type is required"),
+  parcelType: z.string().min(1, "Parcel type is required"),
+  pieces: z.coerce.number().min(1, "Pieces is required"),
+  image: z.instanceof(File).optional().nullable(),
+  recepientName: z.string().min(1, "Recipient name is required"),
+  recepientNumber: z.string().min(1, "Recipient number is required"),
+  additionalInfo: z.string().optional().nullable(),
 
-  vehicleType: z.string({ required_error: "Vehicle type is required" }),
-  deliveryAddress: z.string({ required_error: "Delivery address is required" }),
-  pickUpAddress: z.string({ required_error: "Pickup address is required" }),
+  // Customer fields
+  BaseCharges: z.coerce.number().min(1, "Base charges is required"),
+  distanceCharges: z.coerce.number().min(1, "Distance charges is required"),
+  timeCharges: z.coerce.number().min(1, "Time charges is required"),
+  AdditionalCharges: z.coerce.number().min(1, "Additional charges is required"),
+  totalEstimatedFare: z.coerce
+    .number()
+    .min(1, "Total estimated cost is required"),
+
+  coupon: z.string().optional().nullable(),
 });
 
 /** ✅ GET - Fetch Paginated Orders */
 export const GET = async (request: Request) => {
-  const session = await auth();
-  if (!session || session.user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  // const session = await auth();
+  // if (!session || session.user.role !== "ADMIN") {
+  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -50,6 +65,8 @@ export const GET = async (request: Request) => {
       prisma.order.count(),
     ]);
 
+    console.log(orders, "orders");
+
     return NextResponse.json(
       {
         message: "Orders retrieved successfully",
@@ -76,17 +93,43 @@ export const GET = async (request: Request) => {
 
 export const POST = async (request: Request) => {
   const session = await auth();
-  const user = await validateJWT(request);
+  const id = validateJWT(request);
 
-  if (!session || !user || user.role !== "CUSTOMER") {
+  let user = null;
+
+  if (id) {
+    user = await prisma.user.findUnique({
+      where: { id },
+    });
+  }
+
+  // Ensure `user` is defined before accessing `user.role`
+  if (!(session?.user.role === "ADMIN" || user?.role === "CUSTOMER")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const body = await request.json();
-    const parsedData = OrderSchema.safeParse(body);
+    const body = await request.formData();
+    const parsedData = OrderSchema.safeParse({
+      pickUp: body.get("pickUp") as string,
+      dropOff: body.get("dropOff") as string,
+      vehicleType: body.get("vehicleType") as string,
+      parcelType: body.get("parcelType") as string,
+      pieces: body.get("pieces") as string,
+      image: body.get("image") as File,
+      recepientName: body.get("recepientName") as string,
+      recepientNumber: body.get("recepientNumber") as string,
+      additionalInfo: body.get("additionalInfo") as string,
+      BaseCharges: body.get("BaseCharges") as string,
+      distanceCharges: body.get("distanceCharges") as string,
+      timeCharges: body.get("timeCharges") as string,
+      AdditionalCharges: body.get("AdditionalCharges") as string,
+      totalEstimatedFare: body.get("totalEstimatedFare") as string,
+    });
 
     if (!parsedData.success) {
+      console.log(parsedData.error.format(), "parsedData.error.format()");
+
       return NextResponse.json(
         { error: "Invalid data", errors: parsedData.error.format() },
         { status: 400 }
@@ -94,29 +137,26 @@ export const POST = async (request: Request) => {
     }
 
     const {
+      pickUp,
+      dropOff,
       vehicleType,
-      pickUpAddress,
-      deliveryAddress,
-      receipientName,
+      parcelType,
+      pieces,
+      image,
+      recepientName,
       recepientNumber,
+      additionalInfo,
+      BaseCharges,
+      distanceCharges,
+      timeCharges,
+      AdditionalCharges,
+      totalEstimatedFare,
+      coupon,
     } = parsedData.data;
 
-    // Find available drivers
-    const drivers = await prisma.user.findMany({
-      where: {
-        role: "DRIVER",
-        driverProfile: {
-          vehicleType,
-          kycStatus: "APPROVED",
-        },
-      },
-    });
-
-    if (drivers.length === 0) {
-      return NextResponse.json(
-        { error: "No drivers available" },
-        { status: 404 }
-      );
+    let uploadResult = null;
+    if (image instanceof File) {
+      uploadResult = await uploadFile("orders", image);
     }
 
     // Run all database operations in a Prisma transaction
@@ -124,41 +164,35 @@ export const POST = async (request: Request) => {
       // Create the order
       const newOrder = await tx.order.create({
         data: {
-          customerId: user.id || session.user.id || "",
-          pickUpAddress,
-          deliveryAddress,
-          receipientName,
-          recepientNumber,
+          customerId: user?.id || session?.user.id || "",
+          pickUp,
+          dropOff,
           vehicleType,
+          parcelType,
+          pieces,
+          image: uploadResult || {},
+          recepientName,
+          recepientNumber,
+          additionalInfo,
+          BaseCharges,
+          distanceCharges,
+          timeCharges,
+          AdditionalCharges,
+          totalEstimatedFare,
+          couponId: coupon || null,
+          status: "PENDING",
         },
         include: { customer: { select: { id: true, name: true } } },
       });
 
-      // Create bids and inbox messages for drivers
-      await Promise.all(
-        drivers.map(async (driver) => {
-          await tx.inbox.create({
-            data: {
-              userId: driver.id,
-              message: `New delivery request for Order #${newOrder.id}`,
-              type: "BID",
-              orderId: newOrder.id,
-            },
-          });
-
-          // Example message function (Replace with actual notification logic)
-          console.log(
-            `Message sent to driver: ${driver.name} - ${driver.phone} for Order: ${newOrder.id}`
-          );
-        })
-      );
-
       return newOrder;
     });
 
+    console.log(result, "result");
+
     return NextResponse.json(
       { message: "Order created successfully", data: result },
-      { status: 201 }
+      { status: 200 }
     );
   } catch (error) {
     console.error("Error creating order:", error);

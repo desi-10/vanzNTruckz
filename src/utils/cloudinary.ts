@@ -7,19 +7,26 @@ cloudinary.config({
   secure: true,
 });
 
-export async function uploadFile(path: string, file: File | null) {
+export async function uploadFile(path: string, file: File | string | null) {
   if (!file) return null;
-  const fileBuffer = await file.arrayBuffer();
-  const mimeType = file.type;
-  const encoding = "base64";
-  const base64Data = Buffer.from(fileBuffer).toString("base64");
 
-  const fileUri = `data:${mimeType};${encoding},${base64Data}`;
+  let fileUri: string;
+
+  if (typeof file === "string") {
+    // Assume it's already a base64 string
+    fileUri = file.startsWith("data:") ? file : `data:image/png;base64,${file}`;
+  } else {
+    const fileBuffer = await file.arrayBuffer();
+    const mimeType = file.type;
+    const encoding = "base64";
+    const base64Data = Buffer.from(fileBuffer).toString("base64");
+    fileUri = `data:${mimeType};${encoding},${base64Data}`;
+  }
 
   const uploadedFile = await cloudinary.uploader.upload(fileUri, {
     invalidate: true,
     resource_type: "auto",
-    filename_override: file.name,
+    filename_override: typeof file === "object" ? file.name : undefined,
     folder: path, // Specify the folder where the file should be uploaded
     use_filename: true,
   });
@@ -29,8 +36,6 @@ export async function uploadFile(path: string, file: File | null) {
   return {
     url: uploadedFile.secure_url,
     id: uploadedFile.public_id,
-    // assetId: uploadedFile.asset_id,
-    // originalUlr: uploadedFile.url,
   };
 }
 
