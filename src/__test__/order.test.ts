@@ -27,13 +27,13 @@ describe("Register API", () => {
       password: "admin123",
       name: "Admin",
       otp,
-      role: "DRIVER",
+      role: "CUSTOMER",
     });
     expect(status).toBe(201);
   });
 });
 
-describe("KYC API", () => {
+describe("Order API", () => {
   let accessToken: string;
 
   it("should return a token", async () => {
@@ -43,35 +43,34 @@ describe("KYC API", () => {
     });
 
     accessToken = data.data.accessToken;
-    expect(data.data.role).toBe("DRIVER");
+    expect(data.data.role).toBe("CUSTOMER");
     expect(status).toBe(200);
     expect(data.data.accessToken).toBeDefined();
     expect(data.data.refreshToken).toBeDefined();
   });
 
-  it("should update KYC", async () => {
+  it("should create an order", async () => {
     const formData = new FormData();
+    // const dummyFile = new Blob([""], { type: "image/jpeg" });
 
-    const dummyFile = new Blob([""], { type: "image/jpeg" });
-
-    formData.append("profilePicture", dummyFile);
-    formData.append("carPicture", dummyFile);
-    formData.append("phoneNumber", "0541234567");
+    formData.append("pickUp", "123 Main Street");
+    formData.append("dropOff", "456 Main Street");
     formData.append("vehicleType", "Sedan");
-    formData.append("numberPlate", "GT-1234-23");
-    formData.append("numberPlatePicture", dummyFile);
-    formData.append("license", "DL1234567");
-    formData.append("licensePicture", dummyFile);
-    formData.append("licenseExpiry", "2025-08-10");
-    formData.append("roadworthySticker", dummyFile);
-    formData.append("roadworthyExpiry", "2025-12-15");
-    formData.append("insuranceSticker", dummyFile);
-    formData.append("insurance", "INS-123456");
-    formData.append("ghanaCard", "GHA-1234567890");
-    formData.append("ghanaCardPicture", dummyFile);
+    formData.append("parcelType", "Box");
+    formData.append("pieces", "2");
+    // formData.append("image", dummyFile);
+    formData.append("recepientName", "John Doe");
+    formData.append("recepientNumber", "123456789");
+    formData.append("additionalInfo", "Additional Info");
+    formData.append("BaseCharges", "100.12");
+    formData.append("distanceCharges", "200.20");
+    formData.append("timeCharges", "300");
+    formData.append("AdditionalCharges", "400");
+    formData.append("totalEstimatedFare", "500");
+
     try {
-      const { data, status } = await axios.patch(
-        url + "/api/v1/kyc",
+      const { data, status } = await axios.post(
+        url + "/api/v1/orders",
         formData,
         {
           headers: {
@@ -82,8 +81,8 @@ describe("KYC API", () => {
       );
 
       expect(status).toBe(200);
-      expect(data.message).toBe("Driver updated successfully");
-      expect(data.data.licenseExpiry).toBeDefined();
+      expect(data.message).toBe("Order created successfully");
+      expect(data.data.pickUp).toBe("123 Main Street");
     } catch (error) {
       if (error instanceof AxiosError) {
         console.error("🔥 API Error Response:", error.response?.data);
@@ -93,16 +92,15 @@ describe("KYC API", () => {
     }
   });
 
-  it("should return the status of the KYC", async () => {
-    const { data, status } = await axios.get(url + "/api/v1/kyc/status", {
+  it("should return the orders", async () => {
+    const { data, status } = await axios.get(url + "/api/v1/orders", {
       headers: {
         Authorization: `Bearer ${accessToken}`,
       },
     });
 
     expect(status).toBe(200);
-    expect(data.message).toBe("KYC status retrieved successfully");
-    expect(data.data.profilePicture).toBeDefined();
-    expect(data.data.carPicture).toBeDefined();
+    expect(data.message).toBe("Orders retrieved successfully");
+    expect(data.data[0].pickUp).toBeDefined();
   });
 });

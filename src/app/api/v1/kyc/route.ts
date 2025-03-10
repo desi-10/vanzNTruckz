@@ -1,11 +1,14 @@
 import { prisma } from "@/lib/db";
 import { deleteFile, uploadFile } from "@/utils/cloudinary";
 import { validateJWT } from "@/utils/jwt";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 const kycSchema = z.object({
-  profilePicture: z.instanceof(File).optional().nullable(),
+  profilePicture: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   carPicture: z.instanceof(File).optional().nullable(),
   phoneNumber: z
     .string()
@@ -26,7 +29,7 @@ const kycSchema = z.object({
   ghanaCardPicture: z.instanceof(File).optional().nullable(),
 });
 
-export const PATCH = async (request: Request) => {
+export const PATCH = async (request: NextRequest) => {
   try {
     const id = validateJWT(request);
 
@@ -62,6 +65,8 @@ export const PATCH = async (request: Request) => {
       ghanaCard: body.get("ghanaCard"),
       ghanaCardPicture: body.get("ghanaCardPicture"),
     });
+
+    console.log(validate.data?.licensePicture, "validate.data?.licensePicture");
 
     if (!validate.success) {
       console.log(validate.error.format());
@@ -132,7 +137,10 @@ export const PATCH = async (request: Request) => {
       );
     }
 
-    const uploadFileToCloudinary = async (folder: string, file?: File) =>
+    const uploadFileToCloudinary = async (
+      folder: string,
+      file?: File | string
+    ) =>
       process.env.NODE_ENV === "production"
         ? file
           ? uploadFile(folder, file)
@@ -163,7 +171,10 @@ export const PATCH = async (request: Request) => {
 
     const uploadResults = await Promise.all(
       uploadKeys.map((key, index) =>
-        uploadFileToCloudinary(uploadFolders[index], filteredData[key] as File)
+        uploadFileToCloudinary(
+          uploadFolders[index],
+          filteredData[key] as File | string
+        )
       )
     );
 
@@ -233,6 +244,8 @@ export const PATCH = async (request: Request) => {
         },
       });
     });
+
+    console.log(result, "result");
 
     return NextResponse.json(
       { message: "Driver updated successfully", data: result },
