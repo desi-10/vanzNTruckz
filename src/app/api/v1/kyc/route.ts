@@ -191,10 +191,14 @@ export const PATCH = async (request: NextRequest) => {
         where: { userId: user.id },
         update: {
           numberPlate:
-            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
-          license: validate.data.license || user.driverProfile?.license || "",
+            validate.data.numberPlate ||
+            user.driverProfile?.numberPlate ||
+            null,
+          license: validate.data.license || user.driverProfile?.license || null,
           vehicleType:
-            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+            validate.data.vehicleType ||
+            user.driverProfile?.vehicleType ||
+            null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
             : user.driverProfile?.licenseExpiry,
@@ -218,10 +222,14 @@ export const PATCH = async (request: NextRequest) => {
         create: {
           user: { connect: { id: user.id } },
           numberPlate:
-            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
-          license: validate.data.license || user.driverProfile?.license || "",
+            validate.data.numberPlate ||
+            user.driverProfile?.numberPlate ||
+            null,
+          license: validate.data.license || user.driverProfile?.license || null,
           vehicleType:
-            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+            validate.data.vehicleType ||
+            user.driverProfile?.vehicleType ||
+            null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
             : user.driverProfile?.licenseExpiry,
