@@ -9,7 +9,10 @@ const kycSchema = z.object({
     .union([z.instanceof(File), z.string().base64()])
     .optional()
     .nullable(),
-  carPicture: z.instanceof(File).optional().nullable(),
+  carPicture: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   phoneNumber: z
     .string()
     .length(10, "Invalid phone number")
@@ -17,16 +20,31 @@ const kycSchema = z.object({
     .nullable(),
   vehicleType: z.string().optional().nullable(),
   numberPlate: z.string().optional().nullable(),
-  numberPlatePicture: z.instanceof(File).optional().nullable(),
+  numberPlatePicture: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   license: z.string().optional().nullable(),
-  licensePicture: z.instanceof(File).optional().nullable(),
+  licensePicture: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   licenseExpiry: z.string().optional().nullable(),
-  roadworthySticker: z.instanceof(File).optional().nullable(),
+  roadworthySticker: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   roadworthyExpiry: z.string().optional().nullable(),
-  insuranceSticker: z.instanceof(File).optional().nullable(),
+  insuranceSticker: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
   insurance: z.string().optional().nullable(),
   ghanaCard: z.string().optional().nullable(),
-  ghanaCardPicture: z.instanceof(File).optional().nullable(),
+  ghanaCardPicture: z
+    .union([z.instanceof(File), z.string().base64()])
+    .optional()
+    .nullable(),
 });
 
 export const PATCH = async (request: NextRequest) => {
@@ -182,7 +200,7 @@ export const PATCH = async (request: NextRequest) => {
       await tx.user.update({
         where: { id: user.id },
         data: {
-          phone: (validate.data.phoneNumber as string) || user.phone || "",
+          phone: (validate.data.phoneNumber as string) || user.phone || null,
           image: uploadResults[0] || {},
         },
       });
@@ -191,10 +209,14 @@ export const PATCH = async (request: NextRequest) => {
         where: { userId: user.id },
         update: {
           numberPlate:
-            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
-          license: validate.data.license || user.driverProfile?.license || "",
+            validate.data.numberPlate ||
+            user.driverProfile?.numberPlate ||
+            null,
+          license: validate.data.license || user.driverProfile?.license || null,
           vehicleType:
-            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+            validate.data.vehicleType ||
+            user.driverProfile?.vehicleType ||
+            null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
             : user.driverProfile?.licenseExpiry,
@@ -218,10 +240,14 @@ export const PATCH = async (request: NextRequest) => {
         create: {
           user: { connect: { id: user.id } },
           numberPlate:
-            validate.data.numberPlate || user.driverProfile?.numberPlate || "",
-          license: validate.data.license || user.driverProfile?.license || "",
+            validate.data.numberPlate ||
+            user.driverProfile?.numberPlate ||
+            null,
+          license: validate.data.license || user.driverProfile?.license || null,
           vehicleType:
-            validate.data.vehicleType || user.driverProfile?.vehicleType || "",
+            validate.data.vehicleType ||
+            user.driverProfile?.vehicleType ||
+            null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
             : user.driverProfile?.licenseExpiry,

@@ -11,7 +11,10 @@ const OrderSchema = z.object({
   vehicleType: z.string().min(1, "Vehicle type is required"),
   parcelType: z.string().min(1, "Parcel type is required"),
   pieces: z.coerce.number().min(1, "Pieces is required"),
-  image: z.instanceof(File).optional().nullable(),
+  image: z
+    .union([z.string().base64(), z.instanceof(File)])
+    .optional()
+    .nullable(),
   recepientName: z.string().min(1, "Recipient name is required"),
   recepientNumber: z.string().min(1, "Recipient number is required"),
   additionalInfo: z.string().optional().nullable(),
