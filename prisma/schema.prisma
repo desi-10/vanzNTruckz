@@ -202,7 +202,8 @@ model Order {
   vehicleType       String
   parcelType        String
   pieces            Int
-  image             Json?
+  imageOne          Json?
+  imageTwo          Json?
   recepientName     String
   recepientNumber   String
   additionalInfo    String?

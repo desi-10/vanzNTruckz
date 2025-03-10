@@ -11,7 +11,11 @@ const OrderSchema = z.object({
   vehicleType: z.string().min(1, "Vehicle type is required"),
   parcelType: z.string().min(1, "Parcel type is required"),
   pieces: z.coerce.number().min(1, "Pieces is required"),
-  image: z
+  imageOne: z
+    .union([z.string().base64(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+  imageTwo: z
     .union([z.string().base64(), z.instanceof(File)])
     .optional()
     .nullable(),
@@ -119,7 +123,7 @@ export const POST = async (request: Request) => {
       vehicleType: body.get("vehicleType") as string,
       parcelType: body.get("parcelType") as string,
       pieces: body.get("pieces") as string,
-      image: body.get("image") as File,
+      image: body.get("image") as File | string,
       recepientName: body.get("recepientName") as string,
       recepientNumber: body.get("recepientNumber") as string,
       additionalInfo: body.get("additionalInfo") as string,
@@ -145,7 +149,8 @@ export const POST = async (request: Request) => {
       vehicleType,
       parcelType,
       pieces,
-      image,
+      imageOne,
+      imageTwo,
       recepientName,
       recepientNumber,
       additionalInfo,
@@ -158,8 +163,14 @@ export const POST = async (request: Request) => {
     } = parsedData.data;
 
     let uploadResult = null;
-    if (image instanceof File) {
-      uploadResult = await uploadFile("orders", image);
+    let uploadResultTwo = null;
+
+    if (imageOne) {
+      uploadResult = await uploadFile("orders", imageOne as File | string);
+    }
+
+    if (imageTwo) {
+      uploadResultTwo = await uploadFile("orders", imageTwo as File | string);
     }
 
     // Run all database operations in a Prisma transaction
@@ -173,7 +184,8 @@ export const POST = async (request: Request) => {
           vehicleType,
           parcelType,
           pieces,
-          image: uploadResult || {},
+          imageOne: uploadResult || {},
+          imageTwo: uploadResultTwo || {},
           recepientName,
           recepientNumber,
           additionalInfo,
