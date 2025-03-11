@@ -84,10 +84,7 @@ export const PATCH = async (request: NextRequest) => {
       ghanaCardPicture: body.get("ghanaCardPicture"),
     });
 
-    console.log(validate.data?.licensePicture, "validate.data?.licensePicture");
-
     if (!validate.success) {
-      console.log(validate.error.format());
       return NextResponse.json(
         { error: "Invalid data", errors: validate.error.format() },
         { status: 400 }
@@ -208,6 +205,10 @@ export const PATCH = async (request: NextRequest) => {
       return await tx.driver.upsert({
         where: { userId: user.id },
         update: {
+          insurance:
+            validate.data.insurance || user.driverProfile?.insurance || null,
+          ghanaCard:
+            validate.data.ghanaCard || user.driverProfile?.ghanaCard || null,
           numberPlate:
             validate.data.numberPlate ||
             user.driverProfile?.numberPlate ||
@@ -239,6 +240,10 @@ export const PATCH = async (request: NextRequest) => {
         },
         create: {
           user: { connect: { id: user.id } },
+          insurance:
+            validate.data.insurance || user.driverProfile?.insurance || null,
+          ghanaCard:
+            validate.data.ghanaCard || user.driverProfile?.ghanaCard || null,
           numberPlate:
             validate.data.numberPlate ||
             user.driverProfile?.numberPlate ||
@@ -270,8 +275,6 @@ export const PATCH = async (request: NextRequest) => {
         },
       });
     });
-
-    console.log(result, "result");
 
     return NextResponse.json(
       { message: "Driver updated successfully", data: result },

@@ -196,13 +196,14 @@ model Order {
   customerId        String
   driverId          String?
   couponId          String?
+  vehicleId         String
   
-  pickUp            String
-  dropOff           String
-  vehicleType       String
+  pickUpPoint            String
+  dropOffPoint           String
   parcelType        String
   pieces            Int
-  image             Json?
+  imageOne          Json?
+  imageTwo          Json?
   recepientName     String
   recepientNumber   String
   additionalInfo    String?
@@ -214,7 +215,6 @@ model Order {
   totalEstimatedFare Decimal
 
   paymentMethod     Json?
-  coupon            Coupon?      @relation(fields: [couponId], references: [id], onDelete: SetNull)
   status            OrderStatus  @default(PENDING)
   transaction       Transaction?
   dispatch          Dispatch?
@@ -226,8 +226,10 @@ model Order {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  customer         User     @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  driver           Driver?  @relation(fields: [driverId], references: [userId], onDelete: SetNull)
+  coupon            Coupon?      @relation(fields: [couponId], references: [id])
+  vehicleType      VehicleType @relation(fields: [vehicleId], references: [id])
+  customer         User     @relation(fields: [customerId], references: [id])
+  driver           Driver?  @relation(fields: [driverId], references: [userId])
 }
 
 
@@ -301,4 +303,16 @@ model Coupon {
   updatedAt DateTime @updatedAt
 
   orders Order[]
+}
+
+
+model VehicleType {
+  id        String   @id @default(cuid())
+  name      String
+  weight    Float
+  isActive  Boolean  @default(true)
+
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
