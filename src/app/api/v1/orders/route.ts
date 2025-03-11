@@ -6,8 +6,8 @@ import { auth } from "@/auth";
 import { uploadFile } from "@/utils/cloudinary";
 
 const OrderSchema = z.object({
-  pickUp: z.string().min(1, "Pick up address is required"),
-  dropOff: z.string().min(1, "Drop off address is required"),
+  pickUpPoint: z.string().min(1, "Pick up address is required"),
+  dropOffPoint: z.string().min(1, "Drop off address is required"),
   vehicleType: z.string().min(1, "Vehicle type is required"),
   parcelType: z.string().min(1, "Parcel type is required"),
   pieces: z.coerce.number().min(1, "Pieces is required"),
@@ -144,8 +144,8 @@ export const POST = async (request: Request) => {
     }
 
     const {
-      pickUp,
-      dropOff,
+      pickUpPoint,
+      dropOffPoint,
       vehicleType,
       parcelType,
       pieces,
@@ -179,9 +179,9 @@ export const POST = async (request: Request) => {
       const newOrder = await tx.order.create({
         data: {
           customerId: user?.id || session?.user.id || "",
-          pickUp,
-          dropOff,
-          vehicleType,
+          pickUpPoint,
+          dropOffPoint,
+          vehicleId: vehicleType,
           parcelType,
           pieces,
           imageOne: uploadResult || {},
