@@ -5,7 +5,7 @@ const url = process.env.NEXT_PUBLIC_URL || "http://localhost:3000/";
 
 describe("Register API", () => {
   beforeAll(async () => {
-    await prisma.user.deleteMany(); // Reset DB
+    await prisma.user.deleteMany();
   });
 
   let otp: string;
@@ -50,7 +50,6 @@ describe("Login API", () => {
 describe("Reset Password API", () => {
   beforeAll(async () => {
     await prisma.emailOTP.deleteMany();
-    console.log("Database Reset");
   });
 
   let otp: string;
