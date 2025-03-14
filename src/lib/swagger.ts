@@ -8,6 +8,7 @@ import kycDocs from "@/docs/kyc";
 import kycStatusDocs from "@/docs/kyc-status";
 import ordersGetDocs from "@/docs/get-orders";
 import ordersPostDocs from "@/docs/create-order";
+import getUserDocs from "@/docs/get-user";
 
 export const getApiDocs = async () => {
   const spec = createSwaggerSpec({
@@ -39,6 +40,7 @@ export const getApiDocs = async () => {
         ...kycStatusDocs,
         ...ordersGetDocs,
         ...ordersPostDocs,
+        ...getUserDocs,
       },
     },
   });
