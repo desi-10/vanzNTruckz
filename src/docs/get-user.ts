@@ -1,15 +1,24 @@
 import { OpenAPIV3 } from "openapi-types";
 
-const getUserDocs: OpenAPIV3.PathsObject = {
-  "/api/v1/users/:id": {
+const openApiDocs: OpenAPIV3.PathsObject = {
+  "/api/v1/users/{id}": {
     get: {
       summary: "Get User Details",
       description:
         "Retrieves the authenticated user's details using session-based authentication for web or JWT for mobile.",
       tags: ["User"],
-      security: [{ bearerAuth: [] }],
+      security: [{ BearerAuth: [] }],
+      parameters: [
+        {
+          name: "id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+          description: "User ID",
+        },
+      ],
       responses: {
-        200: {
+        "200": {
           description: "User retrieved successfully",
           content: {
             "application/json": {
@@ -49,7 +58,7 @@ const getUserDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        401: {
+        "401": {
           description: "Unauthorized - User is not authenticated",
           content: {
             "application/json": {
@@ -62,7 +71,7 @@ const getUserDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        404: {
+        "404": {
           description: "User not found",
           content: {
             "application/json": {
@@ -75,7 +84,7 @@ const getUserDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        500: {
+        "500": {
           description: "Internal Server Error",
           content: {
             "application/json": {
@@ -93,4 +102,4 @@ const getUserDocs: OpenAPIV3.PathsObject = {
   },
 };
 
-export default getUserDocs;
+export default openApiDocs;

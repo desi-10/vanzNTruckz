@@ -6,9 +6,9 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const UpdateUserSchema = z.object({
-  identifier: z.string().min(1).max(255),
-  name: z.string().min(2).max(50).optional().nullable(),
-  phone: z.string().min(10).max(10).optional().nullable(),
+  email: z.string().email().optional().nullable(),
+  phone: z.string().min(10).max(10).optional().nullable().optional(),
+  name: z.string().min(2).max(50).optional().nullable().optional(),
   image: z
     .union([z.string().base64(), z.instanceof(File)])
     .optional()
@@ -20,6 +20,8 @@ export const GET = async (request: Request) => {
     // Web authentication (session) & Mobile authentication (JWT)
     const session = await auth(); // Web
     const userId = session?.user.id || validateJWT(request); // Mobile
+
+    console.log(userId, "userId");
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -65,16 +67,44 @@ export const PATCH = async (request: Request) => {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
     // Parse form data
     const body = await request.formData();
     const updateFields: Record<string, string | File | null> = {};
 
     // Validate only provided fields
-    if (body.has("identifier"))
-      updateFields.identifier = body.get("identifier");
-    if (body.has("name")) updateFields.name = body.get("name");
-    if (body.has("phone")) updateFields.phone = body.get("phone");
-    if (body.has("image")) updateFields.image = body.get("image");
+    if (body.has("email")) updateFields.email = body.get("email") as string;
+    if (body.has("name")) updateFields.name = body.get("name") as string;
+    if (body.has("phone")) updateFields.phone = body.get("phone") as string;
+    if (body.has("image")) updateFields.image = body.get("image") as File;
+    if (body.has("otp")) updateFields.otp = body.get("otp") as string;
+
+    if ((updateFields.email || updateFields.phone) && !updateFields.otp) {
+      return NextResponse.json({ error: "OTP is required" }, { status: 400 });
+    }
+
+    // Validate OTP if provided
+    if (updateFields.otp) {
+      const otpRecord = await prisma.idOTP.findFirst({
+        where: { id: user.id, otp: updateFields.otp as string },
+      });
+
+      if (!otpRecord) {
+        return NextResponse.json(
+          { error: "Invalid OTP or OTP expired" },
+          { status: 401 }
+        );
+      }
+
+      await prisma.idOTP.delete({ where: { id: otpRecord.id } });
+    }
 
     // Validate user input
     const validatedData = UpdateUserSchema.safeParse(updateFields);
@@ -85,59 +115,29 @@ export const PATCH = async (request: Request) => {
       );
     }
 
-    const { identifier, name, phone, image } = validatedData.data;
-    const sanitizedIdentifier = identifier.trim().toLowerCase();
+    const { email, phone, name, image } = validatedData.data;
 
-    let isEmail = false;
-    let user = null;
+    let imageUploadResult = null;
 
-    // Identify email or phone
-    if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
-      isEmail = true;
-      user = await prisma.user.findUnique({
-        where: { email: sanitizedIdentifier },
-      });
-    } else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
-      user = await prisma.user.findUnique({
-        where: { phone: sanitizedIdentifier },
-      });
-    } else {
-      return NextResponse.json(
-        { error: "Please enter a valid email or phone number" },
-        { status: 400 }
-      );
-    }
-
-    // Check if user already exists
-    if (!user) {
-      return NextResponse.json(
-        { error: "User does not exist" },
-        { status: 404 }
-      );
-    }
-
-    let updateResult = null;
     // Handle image upload if present
-    if (validatedData.data.image && user.image) {
+    if (image instanceof File) {
+      // Delete old image if exists
       if (user.image && typeof user.image === "object" && "id" in user.image) {
         await deleteFile(user.image.id as string);
       }
-      updateResult = await uploadFile("profile", image as File | string);
+
+      // Upload new image
+      imageUploadResult = await uploadFile("profile", image);
     }
 
     // Update user in database with only provided fields
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: {
-        name: name || user.name,
+        email: email || user.email,
         phone: phone || user.phone,
-        image: updateResult || user.image || {},
-        ...(isEmail
-          ? { emailVerified: new Date() }
-          : { phoneVerified: new Date() }),
-        ...(isEmail
-          ? { email: sanitizedIdentifier }
-          : { phone: sanitizedIdentifier }),
+        name: name || user.name,
+        image: imageUploadResult || user.image || {},
       },
     });
 

@@ -139,6 +139,14 @@ model EmailOTP {
   expires DateTime
 
   @@unique([email, otp])
+
+}
+model IdOTP {
+  id      String   @unique
+  otp     String   @unique
+  expires DateTime
+
+  @@unique([id, otp])
 }
 
 model TwoFactorConfimation {
