@@ -1,10 +1,12 @@
-const kycStatusDocs = {
-  "/api/v1/kyc/status": {
+import { OpenAPIV3 } from "openapi-types";
+
+const kycStatusDocs: OpenAPIV3.PathsObject = {
+  "/api/v1/drivers/kyc/status/": {
     get: {
       summary: "Retrieve Driver KYC Status",
       description:
         "Fetches the KYC (Know Your Customer) status of an authenticated driver, including profile picture, car picture, license details, and other required documents.",
-      tags: ["KYC"],
+      tags: ["Driver"],
       security: [{ BearerAuth: [] }],
       responses: {
         "200": {

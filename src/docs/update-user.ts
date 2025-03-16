@@ -1,25 +1,37 @@
 import { OpenAPIV3 } from "openapi-types";
 
-const openApiDocs: OpenAPIV3.PathsObject = {
+const updateUser: OpenAPIV3.PathsObject = {
   "/api/v1/users/{id}": {
-    get: {
-      summary: "Get User Details",
+    patch: {
+      summary: "Update User Profile",
       description:
-        "Retrieves the authenticated user's details using session-based authentication for web or JWT for mobile.",
+        "Updates the authenticated user's profile details. If updating email or phone, an OTP is required.",
       tags: ["User"],
       security: [{ BearerAuth: [] }],
-      parameters: [
-        {
-          name: "id",
-          in: "path",
-          required: true,
-          schema: { type: "string" },
-          description: "User ID",
+      requestBody: {
+        required: true,
+        content: {
+          "multipart/form-data": {
+            schema: {
+              type: "object",
+              properties: {
+                email: {
+                  type: "string",
+                  format: "email",
+                  example: "newemail@example.com",
+                },
+                name: { type: "string", example: "John Doe" },
+                phone: { type: "string", example: "+1234567890" },
+                image: { type: "string", format: "binary" },
+                otp: { type: "string", example: "123456" },
+              },
+            },
+          },
         },
-      ],
+      },
       responses: {
-        "200": {
-          description: "User retrieved successfully",
+        200: {
+          description: "User updated successfully",
           content: {
             "application/json": {
               schema: {
@@ -27,7 +39,7 @@ const openApiDocs: OpenAPIV3.PathsObject = {
                 properties: {
                   message: {
                     type: "string",
-                    example: "User retrieved successfully",
+                    example: "User updated successfully",
                   },
                   data: {
                     type: "object",
@@ -35,21 +47,10 @@ const openApiDocs: OpenAPIV3.PathsObject = {
                       id: { type: "string", example: "user_123" },
                       name: { type: "string", example: "John Doe" },
                       email: { type: "string", example: "john@example.com" },
+                      phone: { type: "string", example: "+1234567890" },
                       image: {
                         type: "string",
                         example: "https://example.com/profile.jpg",
-                      },
-                      role: { type: "string", example: "USER" },
-                      driverProfile: {
-                        type: "object",
-                        nullable: true,
-                        properties: {
-                          licenseNumber: {
-                            type: "string",
-                            example: "D12345678",
-                          },
-                          vehicleType: { type: "string", example: "Sedan" },
-                        },
                       },
                     },
                   },
@@ -58,7 +59,20 @@ const openApiDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        "401": {
+        400: {
+          description: "Bad request (e.g., missing OTP for email/phone update)",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  error: { type: "string", example: "OTP is required" },
+                },
+              },
+            },
+          },
+        },
+        401: {
           description: "Unauthorized - User is not authenticated",
           content: {
             "application/json": {
@@ -71,7 +85,7 @@ const openApiDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        "404": {
+        404: {
           description: "User not found",
           content: {
             "application/json": {
@@ -84,7 +98,7 @@ const openApiDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        "500": {
+        500: {
           description: "Internal Server Error",
           content: {
             "application/json": {
@@ -102,4 +116,4 @@ const openApiDocs: OpenAPIV3.PathsObject = {
   },
 };
 
-export default openApiDocs;
+export default updateUser;

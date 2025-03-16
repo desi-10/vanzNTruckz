@@ -1,4 +1,6 @@
-const forgotPasswordDocs = {
+import { OpenAPIV3 } from "openapi-types";
+
+const forgotPasswordDocs: OpenAPIV3.PathsObject = {
   "/api/auth/mobile/forgot-password": {
     post: {
       summary: "Forgot Password",

@@ -1,10 +1,12 @@
-const kycDocs = {
-  "/api/v1/kyc": {
+import { OpenAPIV3 } from "openapi-types";
+
+const kycDocs: OpenAPIV3.PathsObject = {
+  "/api/v1/drivers/kyc": {
     patch: {
       summary: "Driver KYC Update",
       description:
         "Allows authenticated drivers to update their KYC (Know Your Customer) information, including profile picture, car picture, license, number plate, and other required documents.",
-      tags: ["KYC"],
+      tags: ["Driver"],
       security: [{ BearerAuth: [] }],
       requestBody: {
         required: true,
@@ -151,34 +153,22 @@ const kycDocs = {
                         format: "uri",
                         example: "https://example.com/uploads/insurance.jpg",
                       },
-                      properties: {
-                        phoneNumber: {
-                          type: "string",
-                          example: "0551234567",
-                        },
-                        vehicleType: { type: "string", example: "Sedan" },
-                        numberPlate: {
-                          type: "string",
-                          example: "GR-1234-22",
-                        },
-                        license: { type: "string", example: "D12345678" },
-                        licenseExpiry: {
-                          type: "string",
-                          format: "date",
-                          example: "2025-06-30",
-                        },
-                        roadworthyExpiry: {
-                          type: "string",
-                          format: "date",
-                          example: "2025-12-31",
-                        },
-                        insurance: { type: "string", example: "Allianz" },
-                        ghanaCard: {
-                          type: "string",
-                          example: "GHA-1234567890",
-                        },
+                      phoneNumber: { type: "string", example: "0551234567" },
+                      vehicleType: { type: "string", example: "Sedan" },
+                      numberPlate: { type: "string", example: "GR-1234-22" },
+                      license: { type: "string", example: "D12345678" },
+                      licenseExpiry: {
+                        type: "string",
+                        format: "date",
+                        example: "2025-06-30",
                       },
-
+                      roadworthyExpiry: {
+                        type: "string",
+                        format: "date",
+                        example: "2025-12-31",
+                      },
+                      insurance: { type: "string", example: "Allianz" },
+                      ghanaCard: { type: "string", example: "GHA-1234567890" },
                       updatedAt: {
                         type: "string",
                         format: "date-time",
