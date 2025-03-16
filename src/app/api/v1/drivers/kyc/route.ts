@@ -97,24 +97,26 @@ export const PATCH = async (request: NextRequest) => {
       )
     );
 
-    const deleteExistingFile = async (obj: { id: string }) => {
+    const deleteExistingFile = async (obj: { id: string; url: string }) => {
       if (obj && typeof obj === "object" && "id" in obj) {
         await deleteFile(obj.id);
       }
     };
 
     const filesToDelete = [
-      user.image,
-      user.driverProfile?.profilePicture,
-      user.driverProfile?.carPicture,
-      user.driverProfile?.numberPlatePicture,
-      user.driverProfile?.licensePicture,
-      user.driverProfile?.roadworthySticker,
-      user.driverProfile?.insuranceSticker,
-      user.driverProfile?.ghanaCardPicture,
-    ].filter(
-      (file): file is { id: string } => file !== undefined || file !== null
-    );
+      { key: "profilePicture", file: user.driverProfile?.profilePicture },
+      { key: "carPicture", file: user.driverProfile?.carPicture },
+      {
+        key: "numberPlatePicture",
+        file: user.driverProfile?.numberPlatePicture,
+      },
+      { key: "licensePicture", file: user.driverProfile?.licensePicture },
+      { key: "roadworthySticker", file: user.driverProfile?.roadworthySticker },
+      { key: "insuranceSticker", file: user.driverProfile?.insuranceSticker },
+      { key: "ghanaCardPicture", file: user.driverProfile?.ghanaCardPicture },
+    ]
+      .filter(({ key }) => key in filteredData)
+      .map(({ file }) => file as { id: string; url: string });
 
     await Promise.all(filesToDelete.map(deleteExistingFile));
 
@@ -240,38 +242,24 @@ export const PATCH = async (request: NextRequest) => {
         },
         create: {
           user: { connect: { id: user.id } },
-          insurance:
-            validate.data.insurance || user.driverProfile?.insurance || null,
-          ghanaCard:
-            validate.data.ghanaCard || user.driverProfile?.ghanaCard || null,
-          numberPlate:
-            validate.data.numberPlate ||
-            user.driverProfile?.numberPlate ||
-            null,
-          license: validate.data.license || user.driverProfile?.license || null,
-          vehicleType:
-            validate.data.vehicleType ||
-            user.driverProfile?.vehicleType ||
-            null,
+          insurance: validate.data.insurance || null,
+          ghanaCard: validate.data.ghanaCard || null,
+          numberPlate: validate.data.numberPlate || null,
+          license: validate.data.license || null,
+          vehicleType: validate.data.vehicleType || null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
-            : user.driverProfile?.licenseExpiry,
+            : null,
           roadworthyExpiry: validate.data.roadworthyExpiry
             ? new Date(validate.data.roadworthyExpiry as string)
-            : user.driverProfile?.roadworthyExpiry,
-          profilePicture:
-            uploadResults[0] || user.driverProfile?.profilePicture || {},
-          carPicture: uploadResults[1] || user.driverProfile?.carPicture || {},
-          numberPlatePicture:
-            uploadResults[2] || user.driverProfile?.numberPlatePicture || {},
-          licensePicture:
-            uploadResults[3] || user.driverProfile?.licensePicture || {},
-          roadworthySticker:
-            uploadResults[4] || user.driverProfile?.roadworthySticker || {},
-          insuranceSticker:
-            uploadResults[5] || user.driverProfile?.insuranceSticker || {},
-          ghanaCardPicture:
-            uploadResults[6] || user.driverProfile?.ghanaCardPicture || {},
+            : null,
+          profilePicture: uploadResults[0] || {},
+          carPicture: uploadResults[1] || {},
+          numberPlatePicture: uploadResults[2] || {},
+          licensePicture: uploadResults[3] || {},
+          roadworthySticker: uploadResults[4] || {},
+          insuranceSticker: uploadResults[5] || {},
+          ghanaCardPicture: uploadResults[6] || {},
         },
       });
     });

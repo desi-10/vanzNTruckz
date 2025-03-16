@@ -1,6 +1,5 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/db";
-import { DriverSchema } from "@/types/drivers";
 
 import { NextResponse } from "next/server";
 
@@ -32,35 +31,6 @@ export const GET = async (req: Request) => {
     });
   } catch (error) {
     console.error("Error fetching drivers:", error);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
-  }
-};
-
-export const POST = async (req: Request) => {
-  try {
-    const body = await req.json();
-    const parsedData = DriverSchema.safeParse(body);
-
-    if (!parsedData.success) {
-      return NextResponse.json(
-        { error: "Invalid data", errors: parsedData.error.format() },
-        { status: 400 }
-      );
-    }
-
-    const newDriver = await prisma.driver.create({
-      data: parsedData.data,
-    });
-
-    return NextResponse.json(
-      { message: "Driver added successfully", data: newDriver },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("Error adding driver:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }

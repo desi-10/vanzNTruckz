@@ -1,29 +1,26 @@
-import { getUserByEmail } from "@/data/user";
 import { prisma } from "@/lib/db";
-import { RegisterSchema } from "@/types/user";
 import { NextResponse } from "next/server";
-import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { auth } from "@/auth";
+import bcrypt from "bcryptjs";
+import { uploadFile } from "@/utils/cloudinary";
 
-// ✅ Zod Schema for Pagination
-const PaginationSchema = z.object({
-  page: z.string().optional(),
-  limit: z.string().optional(),
+const QuerySchema = z.object({
+  page: z.string().optional().default("1"),
+  limit: z.string().optional().default("10"),
 });
 
-/** ✅ GET - Fetch Paginated Users */
 export const GET = async (request: Request) => {
   try {
+    // Authenticate user
     const session = await auth();
-    if (session && session?.user.role !== "ADMIN") {
+    if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Parse and validate query parameters
     const { searchParams } = new URL(request.url);
-    const parsedQuery = PaginationSchema.safeParse(
-      Object.fromEntries(searchParams)
-    );
+    const parsedQuery = QuerySchema.safeParse(Object.fromEntries(searchParams));
 
     if (!parsedQuery.success) {
       return NextResponse.json(
@@ -32,15 +29,22 @@ export const GET = async (request: Request) => {
       );
     }
 
-    const page = Number(parsedQuery.data.page) || 1;
-    const limit = Number(parsedQuery.data.limit) || 10;
+    // Convert to numbers and ensure valid values
+    const page = Math.max(1, Number(parsedQuery.data.page));
+    const limit = Math.max(1, Math.min(100, Number(parsedQuery.data.limit))); // Prevent excessive limits
     const skip = (page - 1) * limit;
 
+    // Fetch users
     const users = await prisma.user.findMany({
       skip,
       take: limit,
-      include: { driverProfile: true },
-      omit: { password: true },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        driverProfile: true,
+      },
     });
 
     const totalUsers = await prisma.user.count();
@@ -62,59 +66,112 @@ export const GET = async (request: Request) => {
   }
 };
 
-/** ✅ POST - Register a User */
-export const POST = async (request: Request) => {
+const UserSchema = z.object({
+  identifier: z.string().min(1).max(255),
+  password: z.string().min(6).max(255),
+  name: z.string().min(1).max(255),
+  role: z
+    .enum(["ADMIN", "DRIVER", "CUSTOMER", "SUPER_ADMIN", "SUB_ADMIN"])
+    .default("CUSTOMER"),
+  image: z
+    .union([z.string().base64(), z.instanceof(File)])
+    .optional()
+    .nullable(),
+});
+
+export async function POST(req: Request) {
   try {
+    // Authenticate user
     const session = await auth();
-    if (session && session?.user.role !== "ADMIN") {
+    if (!session || session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const body = await request.json();
-    const parsedData = RegisterSchema.safeParse(body);
+    const body = await req.formData();
 
-    if (!parsedData.success) {
+    // Validate input
+    const validation = UserSchema.safeParse({
+      identifier: body.get("identifier"),
+      password: body.get("password"),
+      name: body.get("name"),
+      role: body.get("role"),
+      image: body.get("image"),
+    });
+
+    if (!validation.success) {
       return NextResponse.json(
-        { error: "Invalid data", errors: parsedData.error.format() },
+        { error: "Invalid input format" },
         { status: 400 }
       );
     }
 
-    const { name, email, password, role, licenseNumber, vehicleType } =
-      parsedData.data;
+    const { identifier, password, name, role } = validation.data;
+    const sanitizedIdentifier = identifier.trim().toLowerCase();
 
-    // Check if user exists
-    const existingUser = await getUserByEmail(email);
-    if (existingUser) {
+    let isEmail = false;
+    let user = null;
+
+    // Identify email or phone
+    if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
+      isEmail = true;
+      user = await prisma.user.findUnique({
+        where: { email: sanitizedIdentifier },
+      });
+    } else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
+      user = await prisma.user.findUnique({
+        where: { phone: sanitizedIdentifier },
+      });
+    } else {
+      return NextResponse.json(
+        { error: "Please enter a valid email or phone number" },
+        { status: 400 }
+      );
+    }
+
+    // Check if user already exists
+    if (user) {
       return NextResponse.json(
         { error: "User already exists" },
-        { status: 400 }
+        { status: 409 }
       );
     }
 
+    let uploadResult = null;
+    if (validation.data.image) {
+      uploadResult = await uploadFile("profile", validation.data.image);
+    }
+
+    // Hash the password securely
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new user
     const newUser = await prisma.user.create({
       data: {
         name,
-        email,
-        emailVerified: new Date(),
         password: hashedPassword,
-        role,
-        driverProfile: { create: { license: licenseNumber, vehicleType } },
+        role: role,
+        image: uploadResult || {},
+        ...(isEmail
+          ? { emailVerified: new Date() }
+          : { phoneVerified: new Date() }),
+        ...(isEmail
+          ? { email: sanitizedIdentifier }
+          : { phone: sanitizedIdentifier }),
       },
-      select: { id: true, name: true, email: true, driverProfile: true },
     });
 
     return NextResponse.json(
-      { message: "User created successfully", data: newUser },
+      {
+        message: "User registered successfully.",
+        user: { id: newUser.id, name: newUser.name },
+      },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Error creating user:", error);
+    console.error("Error registering user:", error);
     return NextResponse.json(
-      { error: "Internal Server Error" },
+      { error: "Something went wrong. Please try again." },
       { status: 500 }
     );
   }
-};
+}
