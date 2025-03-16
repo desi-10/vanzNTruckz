@@ -6,6 +6,7 @@ import { z } from "zod";
 
 const verificationSchema = z.object({
   identifier: z.string().min(3),
+  route: z.string().optional(),
 });
 
 export const POST = async (request: Request) => {
@@ -20,14 +21,26 @@ export const POST = async (request: Request) => {
       );
     }
 
-    const { identifier } = validation.data;
+    const { identifier, route } = validation.data;
     const sanitizedIdentifier = identifier.trim().toLowerCase(); // ✅ Normalize input
 
     const otp = generateOtp();
-    const expiresAt = dayjs().add(10, "minutes").toDate(); // Expire in 2 minutes
+    const expiresAt = dayjs().add(10, "minutes").toDate(); // Expire in 10 minutes
 
     // ✅ Check if identifier is an email
     if (/^\S+@\S+\.\S+$/.test(sanitizedIdentifier)) {
+      if (route === "reset-password") {
+        const user = await prisma.user.findUnique({
+          where: { email: sanitizedIdentifier },
+        });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+      }
+
       await prisma.emailOTP.upsert({
         where: { email: sanitizedIdentifier },
         update: { otp, expires: expiresAt },
@@ -38,6 +51,17 @@ export const POST = async (request: Request) => {
     }
     // ✅ Check if identifier is a phone number
     else if (/^\d{10,15}$/.test(sanitizedIdentifier)) {
+      if (route === "reset-password") {
+        const user = await prisma.user.findUnique({
+          where: { phone: sanitizedIdentifier },
+        });
+        if (!user) {
+          return NextResponse.json(
+            { error: "User not found" },
+            { status: 404 }
+          );
+        }
+      }
       await prisma.phoneOTP.upsert({
         where: { phone: sanitizedIdentifier },
         update: { otp, expires: expiresAt },

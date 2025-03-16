@@ -1,5 +1,5 @@
 const getUserDocs = {
-  "/api/v1/users": {
+  "/api/v1/users/:id": {
     get: {
       summary: "Get User Details",
       description:
