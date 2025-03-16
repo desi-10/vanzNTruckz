@@ -23,6 +23,7 @@ const updateUser: OpenAPIV3.PathsObject = {
                 name: { type: "string", example: "John Doe" },
                 phone: { type: "string", example: "+1234567890" },
                 image: { type: "string", format: "binary" },
+                address: { type: "string", example: "123 Main St" },
                 otp: { type: "string", example: "123456" },
               },
             },
@@ -47,6 +48,7 @@ const updateUser: OpenAPIV3.PathsObject = {
                       id: { type: "string", example: "user_123" },
                       name: { type: "string", example: "John Doe" },
                       email: { type: "string", example: "john@example.com" },
+                      address: { type: "string", example: "123 Main St" },
                       phone: { type: "string", example: "+1234567890" },
                       image: {
                         type: "string",
