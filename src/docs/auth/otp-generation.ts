@@ -1,4 +1,6 @@
-const otpDocs = {
+import { OpenAPIV3 } from "openapi-types";
+
+export const otpDocs: OpenAPIV3.PathsObject = {
   "/api/auth/mobile/otp-generation": {
     post: {
       summary: "Generate OTP",
@@ -14,9 +16,14 @@ const otpDocs = {
               properties: {
                 identifier: {
                   type: "string",
+                  description: "The email or phone number to receive the OTP.",
+                  example: "user@example.com or 1234567890",
+                },
+                route: {
+                  type: "string",
                   description:
-                    "User's email or phone number. Must be a valid email or a phone number with 10-15 digits.",
-                  example: "user@example.com",
+                    "Optional route to specify purpose (e.g., 'reset-password').",
+                  example: "reset-password",
                 },
               },
               required: ["identifier"],
@@ -25,53 +32,17 @@ const otpDocs = {
         },
       },
       responses: {
-        200: {
-          description: "OTP sent successfully",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  message: {
-                    type: "string",
-                    example: "OTP sent successfully",
-                  },
-                },
-              },
-            },
-          },
+        "200": {
+          description: "OTP sent successfully.",
         },
-        400: {
-          description: "Invalid input format or identifier",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "Please enter a valid email or phone number",
-                  },
-                },
-              },
-            },
-          },
+        "400": {
+          description: "Invalid input format.",
         },
-        500: {
-          description: "Internal server error",
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  error: {
-                    type: "string",
-                    example: "Internal server error",
-                  },
-                },
-              },
-            },
-          },
+        "404": {
+          description: "User not found.",
+        },
+        "500": {
+          description: "Internal server error.",
         },
       },
     },

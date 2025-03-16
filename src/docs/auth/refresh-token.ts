@@ -1,4 +1,6 @@
-const refreshTokenDocs = {
+import { OpenAPIV3 } from "openapi-types";
+
+const refreshTokenDocs: OpenAPIV3.PathsObject = {
   "/api/auth/mobile/refresh-token": {
     post: {
       summary: "Refresh Access Token",

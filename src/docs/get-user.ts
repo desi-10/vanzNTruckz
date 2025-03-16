@@ -1,15 +1,13 @@
-const getUserDocs = {
+import { OpenAPIV3 } from "openapi-types";
+
+const getUserDocs: OpenAPIV3.PathsObject = {
   "/api/v1/users/:id": {
     get: {
       summary: "Get User Details",
       description:
         "Retrieves the authenticated user's details using session-based authentication for web or JWT for mobile.",
       tags: ["User"],
-      security: [
-        {
-          bearerAuth: [],
-        },
-      ],
+      security: [{ bearerAuth: [] }],
       responses: {
         200: {
           description: "User retrieved successfully",
