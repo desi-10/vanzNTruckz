@@ -6,12 +6,15 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const UpdateUserSchema = z.object({
-  email: z.string().email().optional(),
-  phone: z.string().min(10).max(10).optional(),
-  name: z.string().min(2).max(50).optional(),
-  address: z.string().min(2).max(50).optional(),
-  otp: z.string().length(4).optional(),
-  image: z.union([z.string().base64(), z.instanceof(File)]).optional(),
+  email: z.string().email().optional().nullish(),
+  phone: z.string().min(10).max(10).optional().nullish(),
+  name: z.string().min(2).max(50).optional().nullish(),
+  address: z.string().min(2).max(50).optional().nullish(),
+  otp: z.string().length(4).optional().nullish(),
+  image: z
+    .union([z.string().base64(), z.instanceof(File)])
+    .optional()
+    .nullish(),
 });
 
 export const GET = async (request: Request) => {
