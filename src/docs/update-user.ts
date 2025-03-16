@@ -1,16 +1,13 @@
 import { OpenAPIV3 } from "openapi-types";
 
-const updateUserDocs: OpenAPIV3.PathsObject = {
-  "/api/v1/users/:ID": {
+const updateUser: OpenAPIV3.PathsObject = {
+  "/api/v1/users/{id}": {
     patch: {
       summary: "Update User Profile",
       description:
-        "Updates the user's profile information, including name, phone, and profile image. The user must be authenticated via session (web) or JWT (mobile).",
+        "Updates the authenticated user's profile details. If updating email or phone, an OTP is required.",
       tags: ["User"],
-      security: [
-        { sessionAuth: [] }, // Web authentication
-        { bearerAuth: [] }, // Mobile authentication (JWT)
-      ],
+      security: [{ BearerAuth: [] }],
       requestBody: {
         required: true,
         content: {
@@ -18,32 +15,23 @@ const updateUserDocs: OpenAPIV3.PathsObject = {
             schema: {
               type: "object",
               properties: {
-                identifier: {
+                email: {
                   type: "string",
-                  description: "Email or phone number of the user.",
+                  format: "email",
+                  example: "newemail@example.com",
                 },
-                name: {
-                  type: "string",
-                  description: "Full name of the user.",
-                },
-                phone: {
-                  type: "string",
-                  description: "Phone number of the user.",
-                },
-                image: {
-                  type: "string",
-                  format: "binary",
-                  description: "Profile image file upload.",
-                },
+                name: { type: "string", example: "John Doe" },
+                phone: { type: "string", example: "+1234567890" },
+                image: { type: "string", format: "binary" },
+                otp: { type: "string", example: "123456" },
               },
-              required: ["identifier"],
             },
           },
         },
       },
       responses: {
-        "200": {
-          description: "User updated successfully.",
+        200: {
+          description: "User updated successfully",
           content: {
             "application/json": {
               schema: {
@@ -56,16 +44,14 @@ const updateUserDocs: OpenAPIV3.PathsObject = {
                   data: {
                     type: "object",
                     properties: {
-                      id: { type: "string", example: "user_cuid_12345" },
+                      id: { type: "string", example: "user_123" },
                       name: { type: "string", example: "John Doe" },
-                      email: { type: "string", example: "johndoe@example.com" },
+                      email: { type: "string", example: "john@example.com" },
                       phone: { type: "string", example: "+1234567890" },
                       image: {
                         type: "string",
-                        example: "https://cdn.example.com/profile.jpg",
+                        example: "https://example.com/profile.jpg",
                       },
-                      emailVerified: { type: "string", format: "date-time" },
-                      phoneVerified: { type: "string", format: "date-time" },
                     },
                   },
                 },
@@ -73,22 +59,21 @@ const updateUserDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        "400": {
-          description: "Invalid request data.",
+        400: {
+          description: "Bad request (e.g., missing OTP for email/phone update)",
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 properties: {
-                  error: { type: "string", example: "Invalid data" },
-                  errors: { type: "object" },
+                  error: { type: "string", example: "OTP is required" },
                 },
               },
             },
           },
         },
-        "401": {
-          description: "Unauthorized access.",
+        401: {
+          description: "Unauthorized - User is not authenticated",
           content: {
             "application/json": {
               schema: {
@@ -100,21 +85,21 @@ const updateUserDocs: OpenAPIV3.PathsObject = {
             },
           },
         },
-        "404": {
-          description: "User not found.",
+        404: {
+          description: "User not found",
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 properties: {
-                  error: { type: "string", example: "User does not exist" },
+                  error: { type: "string", example: "User not found" },
                 },
               },
             },
           },
         },
-        "500": {
-          description: "Internal server error.",
+        500: {
+          description: "Internal Server Error",
           content: {
             "application/json": {
               schema: {
@@ -131,4 +116,4 @@ const updateUserDocs: OpenAPIV3.PathsObject = {
   },
 };
 
-export default updateUserDocs;
+export default updateUser;

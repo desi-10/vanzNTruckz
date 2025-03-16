@@ -6,13 +6,11 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const UpdateUserSchema = z.object({
-  email: z.string().email().optional().nullable(),
-  phone: z.string().min(10).max(10).optional().nullable().optional(),
-  name: z.string().min(2).max(50).optional().nullable().optional(),
-  image: z
-    .union([z.string().base64(), z.instanceof(File)])
-    .optional()
-    .nullable(),
+  email: z.string().email().optional(),
+  phone: z.string().min(10).max(10).optional(),
+  name: z.string().min(2).max(50).optional(),
+  otp: z.string().length(4).optional(),
+  image: z.union([z.string().base64(), z.instanceof(File)]).optional(),
 });
 
 export const GET = async (request: Request) => {
@@ -83,7 +81,8 @@ export const PATCH = async (request: Request) => {
     if (body.has("email")) updateFields.email = body.get("email") as string;
     if (body.has("name")) updateFields.name = body.get("name") as string;
     if (body.has("phone")) updateFields.phone = body.get("phone") as string;
-    if (body.has("image")) updateFields.image = body.get("image") as File;
+    if (body.has("image"))
+      updateFields.image = body.get("image") as File | string | null;
     if (body.has("otp")) updateFields.otp = body.get("otp") as string;
 
     if ((updateFields.email || updateFields.phone) && !updateFields.otp) {
@@ -105,6 +104,8 @@ export const PATCH = async (request: Request) => {
 
       await prisma.idOTP.delete({ where: { id: otpRecord.id } });
     }
+
+    console.log(updateFields, "updateFields");
 
     // Validate user input
     const validatedData = UpdateUserSchema.safeParse(updateFields);
