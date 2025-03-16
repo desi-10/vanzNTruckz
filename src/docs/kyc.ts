@@ -61,6 +61,11 @@ const kycDocs: OpenAPIV3.PathsObject = {
                   example: "2025-06-30",
                   nullable: true,
                 },
+                roadworthyNumber: {
+                  type: "string",
+                  example: "GR-1234-22",
+                  nullable: true,
+                },
                 roadworthySticker: {
                   type: "string",
                   format: "binary",
@@ -80,6 +85,12 @@ const kycDocs: OpenAPIV3.PathsObject = {
                 insurance: {
                   type: "string",
                   example: "Allianz",
+                  nullable: true,
+                },
+                insuranceExpiry: {
+                  type: "string",
+                  format: "date",
+                  example: "2025-12-31",
                   nullable: true,
                 },
                 ghanaCard: {
