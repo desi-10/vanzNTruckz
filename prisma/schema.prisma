@@ -167,10 +167,12 @@ model Driver {
   numberPlatePicture Json?
   licensePicture    Json?
   licenseExpiry     DateTime?
+  roadworthyNumber  String?
   roadworthySticker Json?
   roadworthyExpiry  DateTime?
   insuranceSticker  Json?
   insurance         String?
+  insuranceExpiry   DateTime?
   ghanaCard        String?
   ghanaCardPicture Json?
   kycStatus        KycStatus @default(PENDING)
