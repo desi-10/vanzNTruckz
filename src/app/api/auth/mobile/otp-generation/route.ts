@@ -6,7 +6,7 @@ import { z } from "zod";
 
 const verificationSchema = z.object({
   identifier: z.string().min(3),
-  route: z.string().optional().nullable(),
+  route: z.string().optional().nullish(),
 });
 
 export const POST = async (request: Request) => {
