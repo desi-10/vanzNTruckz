@@ -30,6 +30,7 @@ const kycSchema = z.object({
     .optional()
     .nullable(),
   licenseExpiry: z.string().optional().nullable(),
+  roadworthyNumber: z.string().optional().nullable(),
   roadworthySticker: z
     .union([z.instanceof(File), z.string().base64()])
     .optional()
@@ -40,6 +41,7 @@ const kycSchema = z.object({
     .optional()
     .nullable(),
   insurance: z.string().optional().nullable(),
+  insuranceExpiry: z.string().optional().nullable(),
   ghanaCard: z.string().optional().nullable(),
   ghanaCardPicture: z
     .union([z.instanceof(File), z.string().base64()])
@@ -76,10 +78,12 @@ export const PATCH = async (request: NextRequest) => {
       license: body.get("license"),
       licensePicture: body.get("licensePicture"),
       licenseExpiry: body.get("licenseExpiry"),
+      roadworthyNumber: body.get("roadworthyNumber"),
       roadworthySticker: body.get("roadworthySticker"),
       roadworthyExpiry: body.get("roadworthyExpiry"),
       insuranceSticker: body.get("insuranceSticker"),
       insurance: body.get("insurance"),
+      insuranceExpiry: body.get("insuranceExpiry"),
       ghanaCard: body.get("ghanaCard"),
       ghanaCardPicture: body.get("ghanaCardPicture"),
     });
@@ -223,6 +227,9 @@ export const PATCH = async (request: NextRequest) => {
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
             : user.driverProfile?.licenseExpiry,
+          roadworthyNumber: validate.data.roadworthyNumber
+            ? validate.data.roadworthyNumber
+            : user.driverProfile?.roadworthyNumber,
           roadworthyExpiry: validate.data.roadworthyExpiry
             ? new Date(validate.data.roadworthyExpiry)
             : user.driverProfile?.roadworthyExpiry,
@@ -237,18 +244,25 @@ export const PATCH = async (request: NextRequest) => {
             uploadResults[4] || user.driverProfile?.roadworthySticker || {},
           insuranceSticker:
             uploadResults[5] || user.driverProfile?.insuranceSticker || {},
+          insuranceExpiry: validate.data.insuranceExpiry
+            ? new Date(validate.data.insuranceExpiry)
+            : user.driverProfile?.insuranceExpiry,
           ghanaCardPicture:
             uploadResults[6] || user.driverProfile?.ghanaCardPicture || {},
         },
         create: {
           user: { connect: { id: user.id } },
           insurance: validate.data.insurance || null,
+          roadworthyNumber: validate.data.roadworthyNumber || null,
           ghanaCard: validate.data.ghanaCard || null,
           numberPlate: validate.data.numberPlate || null,
           license: validate.data.license || null,
           vehicleType: validate.data.vehicleType || null,
           licenseExpiry: validate.data.licenseExpiry
             ? new Date(validate.data.licenseExpiry)
+            : null,
+          insuranceExpiry: validate.data.insuranceExpiry
+            ? new Date(validate.data.insuranceExpiry)
             : null,
           roadworthyExpiry: validate.data.roadworthyExpiry
             ? new Date(validate.data.roadworthyExpiry as string)
