@@ -146,7 +146,17 @@ export const PATCH = async (request: Request) => {
     });
 
     return NextResponse.json(
-      { message: "User updated successfully", data: updatedUser },
+      {
+        message: "User updated successfully",
+        data: {
+          id: updatedUser.id,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          name: updatedUser.name,
+          address: updatedUser.address,
+          image: updatedUser.image,
+        },
+      },
       { status: 200 }
     );
   } catch (error) {
