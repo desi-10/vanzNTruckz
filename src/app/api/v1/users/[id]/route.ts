@@ -23,8 +23,6 @@ export const GET = async (request: Request) => {
     const session = await auth(); // Web
     const userId = session?.user.id || validateJWT(request); // Mobile
 
-    console.log(userId, "userId");
-
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -125,7 +123,7 @@ export const PATCH = async (request: Request) => {
     let imageUploadResult = null;
 
     // Handle image upload if present
-    if (image instanceof File) {
+    if (image) {
       // Delete old image if exists
       if (user.image && typeof user.image === "object" && "id" in user.image) {
         await deleteFile(user.image.id as string);
