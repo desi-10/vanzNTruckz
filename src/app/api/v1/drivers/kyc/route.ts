@@ -204,7 +204,7 @@ export const PATCH = async (request: NextRequest) => {
         where: { id: user.id },
         data: {
           phone: (validate.data.phoneNumber as string) || user.phone || null,
-          image: uploadResults[0] || || user.driverProfile?.profilePicture|| {},
+          image: uploadResults[0] || user.driverProfile?.profilePicture || {},
         },
       });
 
